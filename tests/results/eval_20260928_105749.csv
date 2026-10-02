@@ -1,0 +1,38 @@
+﻿id,category,difficulty,status,judge_score,hallucination,judge_reason,keyword_pass,missing,forbidden,tool_calls,context_has_evidence,diagnosis,latency_s,question,answer,expected_answer,source_pages
+Q05,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,11.5,서비스를 활성화하기 위한 유일한 필수 전제조건은?,"유일한 필수 전제조건은 AWS Organizations에서 All Features를 활성화하는 것입니다 [Page 20]. 통합 결제(Consolidated billing)만으로는 충분하지 않습니다 [Page 20]. 참고로, 활성화 시 위임 관리자 계정에 로그인하는 IAM 주체에는 AdministratorAccess 권한이 필요합니다 [Page 20].",AWS Organizations를 All Features로 활성화하는 것. Consolidated billing만으로는 부족하다.,"13, 15"
+Q06,사실,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,2,,,13.8,위임 관리자 계정에 로그인해 활성화할 때 IAM 주체에 필요한 권한은?,결론: 위임 관리자 계정으로 서비스를 활성화할 때 로그인에 사용하는 IAM 주체는 AdministratorAccess 권한을 보유해야 합니다. 이 권한이 없으면 활성화(Enablement) 단계가 실패합니다 [Page 20]. 이 요구 사항은 문서 이력에도 추가된 사항으로 명시되어 있습니다 [Page 184].,AdministratorAccess 권한. 없으면 활성화가 실패한다.,13
+Q11,사실,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,11.1,사용자가 직접 확인하는 CloudWatch 메트릭 이름은?,CloudWatch에서 사용자가 직접 확인할 수 있는 메트릭은 ActiveManagedCases와 SelfManagedCases입니다. 이 서비스의 CloudWatch 네임스페이스는 AWS/Usage/ServiceName입니다 [Page 176].,"네임스페이스 AWS/Usage/ServiceName, 메트릭 ActiveManagedCases와 SelfManagedCases.",169
+Q19,수치,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 추가적인 정보도 제공하여 정확성을 높였습니다.",True,,,3,,,17.6,데모/시뮬레이션 케이스는 어떻게 처리되나요?,"데모/시뮬레이션 케이스는 90일이 지나면 자동으로 종료됩니다 [Page 88]. 일반적으로 케이스의 최종 종료는 고객이 수행하지만, 데모/시뮬레이션 케이스에는 이 자동 종료 예외가 적용됩니다 [Page 12], [Page 88]. 필요 시 종료 후 새로운 정보가 생기면 케이스를 다시 열 수 있습니다 [Page 96].",90일이 지나면 종료된다.,81
+Q28,멀티홉,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,enable-aws-service-access,,5,,,46.7,콘솔 대신 API/CLI로 온보딩하면 콘솔 방식과 달리 직접 해야 하는 작업은?,"API/CLI로 온보딩하면 콘솔이 자동으로 처리하는 몇 가지를 직접 수행해야 합니다. 먼저 AWS Organizations에 대해 본 서비스의 신뢰를 직접 활성화(EnableAWSServiceAccess)하고, 위임 관리자 계정을 직접 등록(register-delegated-administrator)해야 합니다 [Page 114][Page 50]. 또한 관리 계정에서 트리아지용 서비스 연결 역할(AWSServiceRoleForSecurityIncidentResponse_Triage)을 직접 생성해야 하며, 콘솔은 가입 시 필요한 서비스 연결 역할 생성을 자동으로 처리합니다(부재 시 API/CLI로 수동 생성 안내) [Page 50][Page 24][Page 59]. 마지막으로 멤버십 생성과 최소 2명의 Incident Response 팀원 정보를 JSON으로 제공해 등록·검증(create-membership, list/get-membership)을 직접 수행해야 하며, 콘솔에서는 UI로 팀원을 추가합니다 [Page 50][Page 51][Page 25][Page 58].",관리 계정에 AWSServiceRoleForSecurityIncidentResponse_Triage SLR 직접 생성(aws iam create-service-linked-role --aws-service-name triage.security-ir.amazonaws.com)과 enable-aws-service-access로 trusted access 활성화. 팀원은 최소 2명 지정.,"42-43, 47, 107"
+Q33,부정,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,12.3,이 서비스는 보안 태세·컴플라이언스 발견사항(설정 오류 등)도 트리아지하나요?,"아니요. 이 서비스는 위협 탐지 성격의 발견사항만 트리아지하며, 보안 태세·컴플라이언스 발견사항(예: 설정 오류, 벤치마크 위반)은 트리아지하지 않습니다 [Page 9]. Security Hub CSPM와 GuardDuty에서 발견사항을 수집하더라도, 트리아지 대상은 활성 위협에 해당하는 발견사항이며 보안 태세·컴플라이언스 항목은 컨텍스트로는 활용될 수 있으나 트리아지/에스컬레이션 대상이 아닙니다 [Page 76][Page 9].",아니다. 위협 탐지 발견사항만 트리아지한다.,"2, 14"
+Q34,부정,보통,PARTIAL,1,False,"에이전트 답변은 온보딩 이후부터 수집이 시작된다는 내용을 포함하고 있으나, 온보딩 이전 발견사항에 대한 소급 조사가 없다는 핵심 내용을 명확히 전달하지 못하고 있습니다.",False,케이스,,4,False,검색 실패: 온보딩 전에 생성된 GuardDuty 발견사항을 소급 수집하지 않는다는 명확한 언급이 부족합니다.,31.5,온보딩 전에 생성된 GuardDuty 발견사항도 조사해주나요?,"결론: 자동 수집·트리아지는 온보딩 이후부터 사용 가능해지는 GuardDuty 발견사항에 대해 시작되며, 온보딩 이전에 생성된 발견사항을 소급 조사하는지 여부는 문서에서 확인되지 않음. [Page 21]
+
+문서는 GuardDuty나 Security Hub CSPM을 온보딩 후에 활성화해도 “findings are available” 시점부터 즉시 수집과 트리아지가 시작된다고만 명시합니다. [Page 21] 참고로 GuardDuty의 Archived(보관됨) 상태 발견사항은 90일 동안 콘솔에서 조회할 수 있습니다. [Page 55]",소급 수집하지 않는다. 필요하면 온보딩 후 케이스로 제기.,15
+Q44,환각함정,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 구체적인 금액이 문서에 없다는 점도 잘 반영되었습니다.",True,,,1,,,14.3,월 구독 요금은 정확히 얼마인가요?,"정액 월 구독 요금은 없습니다. 이 서비스는 사용량(월간 보안 파인딩 유입 건수) 기반 과금이며, Enterprise Support 및 Unified Operations 고객에게는 추가 비용 없이 포함됩니다 [Page 67]. 그 외 고객은 월 10,000건의 파인딩까지는 무료이고, 이후 단가는 문서에 구체 금액이 명시되어 있지 않으며 별도 가격 페이지를 참조하라고 안내되어 있습니다 [Page 67].","문서에 구체 금액이 없다. 무료 구간(월 10,000건)과 과금 기준(수집 건수)만 있고 가격 페이지를 참조하라고 한다.",60
+Q46,문서모순,어려움,PASS,2,False,"에이전트의 답변은 고객이 케이스를 닫는 주체라는 핵심 내용을 잘 담고 있으며, 문서의 내용을 정확히 인용하여 설명하고 있습니다.",True,,,1,,,13.0,케이스를 닫는 주체는 누구인가요?,"결론: 케이스는 고객 측(귀사의 incident response 팀/담당자)이 콘솔에서 Close Case를 선택해 종결합니다. 문서는 “For AWS supported cases, choose Close Case…”와 “If your incident response team is the responder, select Action/Close Case…”라고 명시해 고객이 직접 닫음을 밝힙니다 [Page 101]. 또한 케이스 종료는 보통 Ready to Close 상태에서 이뤄지며, 그 이전에 닫으면 AWS Security Incident Response 엔지니어의 작업 중단을 요청하는 것으로 간주됩니다 [Page 101]. 종료는 영구적이며 재개불가이므로 주의가 필요합니다 [Page 102]. 참고로 케이스 종료는 고객이 요청하는 흐름으로 진행됩니다 [Page 96].","개요에는 '고객만 닫을 수 있고 AWS는 Ready to Close까지만'이라 하지만, 엔지니어 협업 절에는 엔지니어가 닫는다는 조건이 나오고 무응답 시 자동 종료도 있다. 기본은 고객이 최종 종료.","5, 58, 87, 89, 94"
+Q47,시나리오,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 대응 절차와 권장 방향이 명확하게 정리되어 있습니다.",False,케이스,,4,,,47.9,AWS 계정에서 Access Key가 외부에 노출된 것으로 의심됩니다. 해당 자격 증명이 이미 악용되었을 가능성이 있다면 어떤 순서로 대응해야 하나요?,"1. 상황 요약
+- 노출된 AWS Access Key가 이미 오·남용되었을 가능성이 있으므로, 신속한 격리(Containment)와 자격 증명 교체가 우선입니다. AWS Security Incident Response는 IAM 주체 격리와 자격 증명 로테이션을 즉시 대응 조치로 제시합니다 [Page 55].
+
+2. 관련 대응 절차
+- 즉시 격리(Contain): 노출된 Access Key가 속한 IAM 주체(사용자 또는 역할)를 대상으로 “Contain” 조치를 실행해, 계정 내 리소스와의 통신을 차단하는 deny-all 정책을 부착하여 격리합니다. 이 조치는 IAM 주체 자체는 남기되 효과적으로 사용을 차단합니다 [Page 84]. 단, 이 격리 기능은 기본 활성화가 아니므로, 사전에 필요한 권한을 부여해 두어야 실행할 수 있습니다 [Page 55][Page 25].
+- 자격 증명 로테이션: 노출된 Access Key는 즉시 로테이션하여 악용 가능성을 차단합니다. AWS는 보안 사건 대응의 신속 완화 조치로 자격 증명 로테이션을 제시하며 [Page 55], 장기 액세스 키를 사용하는 불가피한 경우에도 정기 로테이션을 권장합니다 [Page 149].
+- 임시 자격 증명으로 전환: 장기 액세스 키 대신 STS 기반 임시 자격 증명과 역할 사용으로 전환해 재발 위험을 낮춥니다. AWS는 장기 키 대신 동적으로 생성되는 임시 자격 증명을 권장합니다 [Page 157][Page 149–150].
+- MFA 강화: 불가피하게 IAM 사용자 또는 루트 사용자가 필요한 경우, 추가 보안을 위해 MFA를 요구하도록 정책에 MFA 조건을 적용합니다 [Page 153].
+- 루트 사용자 사용 자제: 루트 사용자는 일상 작업에 사용하지 말고, 반드시 필요한 작업에만 사용하도록 보호 조치를 유지합니다 [Page 148].
+
+3. 확인해야 할 사항
+- 노출된 키의 소유 주체 식별: 해당 Access Key가 IAM 사용자 소유인지, 역할과 연계된 것인지 파악해 올바른 대상에 Contain을 적용합니다. Contain은 IAM 사용자/역할 주체를 대상으로 동작합니다 [Page 84].
+- 격리 권한 사전 구성 여부: 격리(Contain) 실행을 위해 필요한 권한이 사전에 부여되었는지, Security Incident Response가 대행할 수 있도록 선승인(Containment actions) 설정이 되어 있는지 확인합니다 [Page 55][Page 25].
+- 장기 키 사용 현황: 장기 액세스 키에 의존하는 워크로드가 있는지 파악하고, 임시 자격 증명으로의 전환 계획(및 로테이션 주기)을 준비합니다 [Page 149–150][Page 157].
+
+4. 권장 대응 방향
+- 우선순위: 1) Contain으로 해당 IAM 주체 격리 [Page 84][Page 55] → 2) 노출된 Access Key 즉시 로테이션 [Page 55][Page 149] → 3) 워크로드를 임시 자격 증명/역할 기반으로 전환 [Page 157][Page 149–150] → 4) MFA 적용 강화 [Page 153] → 5) 향후 사건 대비를 위해 Contain 권한 사전 구성과 자동 대응 준비 상태를 정비 [Page 25][Page 55].
+
+5. 참고 문서 및 페이지
+- Proactive response and alert triaging: 격리/자격 증명 로테이션, 권한 필요성 [Page 55]
+- Onboarding guide: Containment actions 사전 구성(선승인) [Page 25]
+- Contain: IAM 사용자/역할 격리(deny-all 부착) [Page 84]
+- Authenticating with identities: 장기 키 회피 및 로테이션 권장 [Page 149–150]
+- How AWS Security Incident Response works with IAM: 임시 자격 증명 권장 [Page 157]
+- Identity-based policy best practices: MFA 요구 [Page 153]
+- AWS account root user: 루트 사용자 보호 및 최소 사용 [Page 148]","문서 기준 대응 순서: (1) 즉시 AWS-supported 케이스 생성, 유형 'Active Security Incident'(첫 응답 15분). 최초 징후 시점을 시작일로, 관련 계정 ID와 위협 IP를 기재. (2) 봉쇄: 봉쇄 역할(StackSet)이 배포되고 사전 승인되어 있으면 엔지니어가 AWSSupport-ContainIAMPrincipal로 해당 IAM 주체에 deny-all 정책을 붙인다(가역적, 포렌식용으로 주체는 보존). 승인이 없으면 수동 가이드를 받는다. 자격 증명 교체는 봉쇄 예시로 언급됨. (3) 조사: CloudTrail 등 로그 기반. AI 에이전트가 CloudTrail·IAM·Cost Explorer를 조회. (4) 근절·복구: 침해 계정·리소스 제거와 취약점 조치. AWS는 권고만 하고 실행은 고객 몫. 문서에 없는 절차를 사실처럼 단정하면 감점.","4, 48, 73-74, 77-79, 82-84"

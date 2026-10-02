@@ -1,0 +1,25 @@
+[project]
+name = "sesac-3rd-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "soojung0524", email = "soojung0524@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "langchain>=1.4.2",
+    "langchain-openai>=1.6.4",
+    "langchain-text-splitters>=1.1.2",
+    "pymupdf>=1.28.2",
+    "python-dotenv>=1.2.3",
+    "streamlit>=1.64.0",
+    "supabase>=2.31.0",
+]
+
+[project.scripts]
+sesac-3rd-project = "sesac_3rd_project:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"

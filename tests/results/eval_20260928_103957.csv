@@ -1,0 +1,146 @@
+﻿id,category,difficulty,status,judge_score,hallucination,judge_reason,keyword_pass,missing,forbidden,tool_calls,context_has_evidence,diagnosis,latency_s,question,answer,expected_answer,source_pages
+Q01,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,13.7,AWS-supported 케이스의 최초 응답 SLO는 얼마인가요?,"AWS-supported 케이스의 최초 응답 SLO는 15분입니다. 이 SLO는 초기에 접수(acknowledgment) 또는 첫 연락에만 적용되며, 이후 후속 응답 시간에는 적용되지 않습니다. [Page 90][Page 66][Page 11]",15분. 첫 응답에만 적용되고 이후 응답에는 적용되지 않는다.,"4, 19, 82"
+Q02,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,11.7,"인시던트 대응팀에는 최대 몇 명까지 등록할 수 있고, 최소 몇 명이 필요한가요?","최대 10명까지 등록할 수 있고, 최소 2명이 필요합니다. 문서에는 membership 당 최대 10명의 이해관계자(stakeholder)를 구성할 수 있다고 되어 있으며 [Page 70], 온보딩 시 membership 생성에는 최소 2명의 incident response team 멤버를 반드시 지정해야 합니다 [Page 50][Page 51].",최대 10명. 멤버십에는 최소 2명(주/보조 연락처)이 있어야 한다.,"17, 18, 43, 63"
+Q03,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,13.7,케이스 하나에 추가할 수 있는 이해관계자(watcher 포함) 수는?,"케이스당 최대 30명의 이해관계자(워처 포함)를 추가할 수 있습니다. 문서에서는 워처를 “특정 케이스를 볼 수 있도록 권한을 부여받은 이해관계자”로 정의하며, 개별 케이스마다 이해관계자를 최대 30명까지 등록할 수 있다고 명시합니다. [Page 62]",케이스당 최대 30명.,"55, 93"
+Q04,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,10.8,수집된 발견사항 중 고객에게 에스컬레이션되는 비율은 어느 정도인가요?,"전체 고객 기준으로 수집된 발견사항의 1% 미만만 고객에게 에스컬레이션됩니다 [Page 9]. 서비스는 고객의 개입이 정말로 필요한 경우에만 에스컬레이션하며, 이 알림들은 조치가 필요한 검증된 이슈이므로 음소거/억제가 불가합니다 [Page 9]. 또한 상관분석과 중복 제거를 통해 불필요한 알림을 최소화합니다 [Page 9].",전체 고객 기준 1% 미만.,2
+Q05,사실,쉬움,FAIL,0,False,"에이전트의 답변은 서비스 활성화에 필요한 필수 조건을 잘못 설명하고 있으며, 기대 정답과 모순됩니다.",False,All Features,,1,False,검색 실패: AWS Organizations를 All Features로 활성화해야 한다는 내용이 검색된 발췌에 포함되어 있지 않습니다.,11.9,서비스를 활성화하기 위한 유일한 필수 전제조건은?,서비스 활성화를 진행하는 관리자 계정에 AdministratorAccess 권한이 있어야 합니다. 이 권한이 없으면 활성화가 실패합니다. 참고로 Amazon GuardDuty와 AWS Security Hub(CSPM) 활성화는 강력히 권장되지만 필수는 아닙니다. [Page 20],AWS Organizations를 All Features로 활성화하는 것. Consolidated billing만으로는 부족하다.,"13, 15"
+Q06,사실,보통,PARTIAL,1,False,"에이전트 답변은 필요한 권한을 상세히 설명하고 있지만, 기대 정답의 핵심인 'AdministratorAccess 권한'이 언급되지 않아 중요한 내용이 빠졌습니다.",False,AdministratorAccess,,5,False,"검색 실패: AdministratorAccess 권한에 대한 명시적인 언급이 없고, 필요한 IAM 권한 목록이 부족하다.",49.1,위임 관리자 계정에 로그인해 활성화할 때 IAM 주체에 필요한 권한은?,"결론: 위임 관리자 계정으로 AWS Security Incident Response를 활성화하려면, 조직 관리 계정에서 위임 관리자를 지정·활성화할 수 있는 권한(security-ir:CreateMembership, security-ir:UpdateMembership, organizations:EnableAWSServiceAccess, organizations:RegisterDelegatedAdministrator, organizations:ListDelegatedAdministrators, organizations:ListAWSServiceAccessForOrganization, organizations:DescribeOrganizationalUnit, organizations:DescribeAccount, organizations:DescribeOrganization, organizations:ListAccounts, iam:CreateServiceLinkedRole, iam:GetPolicy)이 필요합니다 [Page 114][Page 115].  
+CLI/SDK로 설정하는 경우 Organizations 신뢰 액세스를 EnableAWSServiceAccess로 수동 활성화해야 하며(security-ir.amazonaws.com), 조직 관리 계정을 위임 관리자로 지정하려면 AWSServiceRoleForSecurityIncidentResponse 생성을 위한 iam:CreateServiceLinkedRole 권한이 추가로 요구됩니다 [Page 114][Page 115].  
+또한 위임 관리자 계정에서 콘솔로 설정을 계속하려면 서비스 콘솔 접근을 위해 AWSSecurityIncidentResponseFullAccess(또는 조회만의 경우 AWSSecurityIncidentResponseReadOnlyAccess) 관리형 정책을 부여하십시오 [Page 154][Page 166].",AdministratorAccess 권한. 없으면 활성화가 실패한다.,13
+Q07,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,7.7,온보딩에 걸리는 시간은?,온보딩에는 AWS 조직당 대략 10~15분이 걸립니다 [Page 22].,AWS 조직당 약 10~15분.,15
+Q08,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,3,,,18.5,멤버십 리전을 나중에 변경할 수 있나요?,"아니요. 멤버십과 케이스가 저장되는 AWS 리전은 최초 등록 시에만 선택할 수 있으며, 이후에는 변경할 수 없습니다 [Page 23]. 참고로, 선택한 멤버십 리전과 무관하게 서비스는 지원되는 모든 상용 리전의 보안 탐지를 모니터링합니다 [Page 24].","불가. 최초 등록 후 변경할 수 없다. (단, 모니터링은 지원되는 모든 상용 리전의 발견사항을 대상으로 한다.)","16, 51"
+Q09,사실,쉬움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,8.8,서울 리전에서 이 서비스를 사용할 수 있나요?,예. AWS Security Incident Response는 Asia Pacific (Seoul) 리전에서 지원됩니다 [Page 15]. 또한 이 서비스의 서비스 연결 역할(SLR)도 Seoul 리전에서 지원됩니다 [Page 163].,예. Asia Pacific (Seoul)은 지원 리전이다.,"8, 156"
+Q10,사실,보통,PASS,2,False,"에이전트의 답변은 일본어 지원의 조건을 정확히 설명하고 있으며, 기대 정답의 핵심 내용을 모두 포함하고 있습니다.",False,best-effort,,2,,,17.0,일본어 지원 조건은?,"일본어 지원은 일본 표준시 기준 영업시간(월–금 09:00–17:00, 공휴일 제외)에 한해 베스트 에포트로 제공됩니다. 영어는 전 세계적으로 전용 지원이며, 일본어 지원에는 시간 제한 등 특정 제약이 있습니다. 또한 문서 이력에 일본어 지원과 일본 현지 시간 기준이 명시되었다고 업데이트되어 있습니다. [Page 15], [Page 197]",일본 표준시 평일 09:00-17:00(공휴일 제외)에 best-effort로 제공. 전담 지원은 영어.,8
+Q11,사실,보통,PARTIAL,1,False,"에이전트는 SelfManagedCases와 네임스페이스에 대한 정보를 제공했지만, ActiveManagedCases에 대한 언급이 빠져 있어 핵심 내용이 일부 누락되었습니다.",True,,,1,True,생성 실패: 근거는 검색됐지만 답변에 반영 안 됨,17.7,사용자가 직접 확인하는 CloudWatch 메트릭 이름은?,"SelfManagedCases 입니다. 해당 서비스의 CloudWatch 메트릭은 AWS/Usage/ServiceName 네임스페이스에 게시되며, 제공 메트릭으로 ActiveManagedCases와 SelfManagedCases가 있습니다 [Page 176].","네임스페이스 AWS/Usage/ServiceName, 메트릭 ActiveManagedCases와 SelfManagedCases.",169
+Q12,수치,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,17.5,무료로 처리되는 발견사항 수와 무료 대상 지원 플랜은?,"결론: 무료로 처리되는 발견사항은 월 10,000건이며, Enterprise Support 및 Unified Operations 고객은 지원 플랜에 포함되어 추가 비용이 없습니다 [Page 67].
+
+그 외 고객은 유입된 보안 발견사항 수 기준으로 과금되며, 첫 10,000건/월은 무료입니다 [Page 67].","Enterprise Support·Unified Operations 고객은 추가 비용 없이 포함. 그 외 고객은 월 10,000건까지 무료, 이후 수집 건수 기준 과금.",60
+Q13,수치,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,4,,,27.6,자동 아카이브된 GuardDuty 발견사항은 얼마나 보관되나요?,자동 아카이브된 Amazon GuardDuty 발견사항은 90일 동안 보관됩니다. 이 기간 동안 콘솔에서 상태 필터를 Archived로 설정해 언제든지 조회할 수 있습니다. [Page 55],GuardDuty에 90일간 보관.,"48, 59"
+Q14,수치,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,10.2,케이스 조사 데이터의 기본 보존 기간과 조기 삭제 방법은?,"기본 보존 기간은 90일이며, 이 기간 동안 케이스 조사 데이터가 케이스에 연동되어 보존됩니다. 90일 이전에 삭제가 필요하면 AWS Support에 연락해 조기 삭제를 요청해야 합니다. [Page 142]",기본 90일. 조기 삭제는 AWS Support에 요청.,135
+Q15,수치,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,9.7,케이스 첨부파일은 언제 삭제되나요?,케이스가 Closed로 종료된 후 7일이 지나면 업로드된 첨부파일이 삭제됩니다 [Page 101]. 따라서 필요한 파일은 케이스 종료 전에 미리 다운로드해 보관하는 것을 권장합니다 [Page 101].,케이스가 Closed된 뒤 7일 후 삭제.,94
+Q16,수치,보통,PASS,2,False,"에이전트의 답변은 고객이 응답하지 않을 경우의 처리 절차를 정확히 설명하고 있으며, 기대 정답의 핵심 내용을 모두 포함하고 있습니다.",False,5일,,2,,,26.4,고객이 응답하지 않는 proactive 케이스는 어떻게 되나요?,"결론: 고객이 응답하지 않으면, 중대한 정보 요청에 5영업일 내 회신이 없을 때 케이스는 종료 절차로 진행되며(한 곳에서는 “종료를 추진”으로, 다른 곳에서는 “종료”로 명시) 이후 필요한 경우 재오픈할 수 있습니다 [Page 96], [Page 94].
+
+추가로, Proactive 케이스는 콘솔에서 “[Proactive case]”로 표시되며, 고객이 직접 업데이트·해결·재오픈할 수 있습니다 [Page 97].",5일간 응답이 없으면 자동 종료.,58
+Q17,수치,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,12.3,AI 조사 에이전트의 확인 질문에 답하지 않으면?,"답하지 않아도 10분이 지나면 조사가 자동으로 시작됩니다 [Page 82]. 확인 질문은 선택 사항이며, 이미 충분한 정보가 있으면 에이전트가 질문을 건너뛸 수도 있습니다 [Page 81][Page 82].","모든 항목은 선택이며, 10분 내 답이 없으면 조사가 자동으로 시작된다.",75
+Q18,수치,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,2,,,20.0,OU 연결 변경은 한 번에 몇 개까지 가능한가요?,한 번에 최대 5개의 OU까지 업데이트할 수 있습니다. 5개 초과로 변경하려면 5개씩 나누어 배치로 진행하십시오. [Page 116],한 번에 최대 5개. 추가와 제거를 동시에 할 수 없으며 5개 초과 시 나눠서 진행.,109
+Q19,수치,어려움,PARTIAL,1,False,"에이전트 답변은 데모/시뮬레이션 케이스의 종료 시점에 대한 핵심 내용을 포함하고 있지 않으며, 90일이 지나면 종료된다는 중요한 내용이 빠져 있습니다.",False,90,,3,False,검색 실패: 90일이 지나면 종료된다는 내용이 검색된 발췌에 포함되어 있지 않습니다.,30.0,데모/시뮬레이션 케이스는 어떻게 처리되나요?,"결론: 데모/시뮬레이션 케이스는 self-managed 테스트 케이스로 생성해 알림·연동이 정상 동작하는지 확인하고, “테스트”임을 명확히 표시한 뒤 확인이 끝나면 즉시 종료합니다 [Page 63]. 케이스가 생성되면 설정된 모든 사고 대응 팀원에게 이메일이 전송되고, EventBridge를 구성했다면 연결된 서드파티(예: ServiceNow, Jira, Slack, PagerDuty) 알림도 트리거됩니다 [Page 63]. AWS 지원 참여를 요청한 상태에서 테스트 케이스를 만들면 보안 사고 대응 엔지니어가 실제로 응답할 수 있으니 제목/설명에 테스트임을 분명히 쓰고 불필요한 에스컬레이션을 피하기 위해 신속히 닫으십시오 [Page 63].",90일이 지나면 종료된다.,81
+Q20,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 봉쇄 조치와 공통 특성에 대한 설명이 정확합니다.",False,가역,,2,,,20.9,지원되는 봉쇄(containment) 조치 세 가지와 공통 특성은?,"세 가지 지원되는 봉쇄 조치는 다음과 같습니다: Amazon EC2 봉쇄(AWSSupport-ContainEC2Instance), IAM 주체 봉쇄(AWSSupport-ContainIAMPrincipal), Amazon S3 리소스 봉쇄(AWSSupport-ContainS3Resource) [Page 84][Page 85]. EC2는 보안 그룹을 제한적인 봉쇄 SG로 교체해 신규 트래픽을 차단하고, IAM은 주체에 deny-all 정책을 부여하며, S3는 접근 정책을 수정해 외부 접근을 거부합니다 [Page 84][Page 85]. 공통 특성은 모두 되돌릴 수 있는(reversible) 조치이며, 사건 종료 후 원래 상태로 복원할 수 있다는 점입니다 [Page 84].","EC2(AWSSupport-ContainEC2Instance, 보안그룹 교체로 네트워크 격리), IAM(AWSSupport-ContainIAMPrincipal, deny-all 정책 부착), S3(AWSSupport-ContainS3Resource, 외부 접근 거부 정책). 모두 가역적.",77-78
+Q21,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,14.1,"봉쇄 선호도 옵션과 기본값, 변경 방법은?","결론: 봉쇄(Containment) 선호도는 3가지 옵션이 있고 기본값은 Approval Required이며, 변경은 AWS Support 케이스로 요청합니다 [Page 65].
+
+- 옵션: Approval Required(기본), Contain Confirmed, Contain Suspected [Page 65].
+- 선호도 제출/수정 방법: AWS Support에서 케이스 유형을 “Technical: Security Incident Response Service / Other”로 생성하여 요청합니다 [Page 65].
+- 참고로 봉쇄 기능 자체는 기본적으로 비활성화되어 있으며, 실행하려면 필요한 권한을 먼저 부여해야 합니다 [Page 55].
+- EC2 Triage를 포함하고 싶다면 “Containment with EC2 Triage” CloudFormation 템플릿을 배포해 엔지니어가 EC2 조사 데이터를 수집할 수 있게 할 수 있습니다 [Page 65].","Approval Required(기본값), Contain Confirmed, Contain Suspected. 제출·변경은 케이스 유형 'Technical: Security Incident Response Service / Other'로 AWS Support 케이스를 연다.",58
+Q22,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,8.0,봉쇄 역할용 StackSet은 몇 개 리전에 배포해야 하나요?,한 개 리전에만 배포하면 됩니다. 이유는 IAM 역할이 글로벌 리소스이기 때문에 StackSet을 단일 리전에 배포해도 조직 전체에 적용됩니다. 배포가 완료되면 조직의 모든 계정에서 봉쇄 역할을 사용할 수 있습니다. [Page 34],"1개 리전. IAM 역할은 글로벌 리소스이기 때문. 배포 대상은 'Deploy to organization', service-managed permissions 사용.",26-27
+Q23,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,20.9,구성 검증 시 GuardDuty 'Generate sample findings'를 써도 되나요? 대신 무엇을 쓰나요?,"아니오. GuardDuty의 “Generate sample findings”는 샘플로 표시되어 자동화된 트리아지에서 필터링되며 전체 파이프라인을 타지 않으므로 구성 검증에 사용할 수 없습니다 [Page 61][Page 68]. 대신 GuardDuty 테스트 도메인 guarddutyc2activityb.com을 사용해 실제(샘플 아님) 탐지를 생성하여 파이프라인을 검증하십시오 [Page 61]. 보호 대상 계정의 EC2 인스턴스에 Session Manager 또는 SSH로 접속해 “dig guarddutyc2activityb.com”을 실행하면 약 5분 내 탐지가 생성·수집되고, 트리아지 후 아카이브되는 것이 정상 동작입니다 [Page 61].","안 된다. 샘플 발견사항은 자동 트리아지에서 필터링된다. 대신 대상 계정의 EC2에서 'dig guarddutyc2activityb.com'을 실행한다. 약 5분 내 발견사항이 생기고 15분 내 아카이브되어야 하며, 케이스가 생성되지 않는 것이 정상.",54
+Q24,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,15.1,멤버 계정에서 파이프라인 EventBridge 규칙이 있는지 어떻게 확인하나요?,"1. 상황 요약
+- 멤버(covered member) 계정에 SIR 파이프라인용 EventBridge 규칙이 정상 배포/활성화되어 있는지 확인하려는 요청입니다. [Page 60]
+
+2. 관련 대응 절차
+- 멤버 계정으로 Amazon EventBridge 콘솔을 엽니다.
+- 좌측 탐색에서 Rules를 선택합니다.
+- 이름에 “SIR”이 포함되고 상태가 Enabled인 규칙들이 존재하는지 확인합니다. [Page 60]
+
+3. 확인해야 할 사항
+- 규칙 이름에 “SIR”이 포함되어 있는지
+- 규칙 상태가 Enabled인지 [Page 60]
+
+4. 권장 대응 방향
+- 규칙이 없거나 비활성화되어 있으면, Security Incident Response 콘솔에서 Proactive response 설정을 다시 수행하거나 AWS Support에 문의합니다. [Page 60]
+
+5. 참고 문서 및 페이지
+- Getting started > Validating your AWS Security Incident Response configuration > Verify EventBridge rules are deployed in member accounts [Page 60]",EventBridge 콘솔 > Rules에서 이름에 'SIR'이 포함된 규칙이 있고 Enabled인지 확인.,"53, 173"
+Q25,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,11.3,서비스가 만든 GuardDuty suppression rule은 어떻게 식별하나요?,"결론: AWS Security Incident Response가 만든 GuardDuty suppression rule은 이름 접두사 SIRTriage-로 식별되며, GuardDuty 콘솔의 Suppression rules에서 확인할 수 있습니다 [Page 66][Page 30].
+
+확인 방법: GuardDuty 콘솔 > Findings > Suppression rules로 이동하면 계정의 모든 규칙이 표시됩니다 [Page 30]. 또한 이런 규칙이 생성되면 귀하의 incident response 팀에 알림이 전달됩니다 [Page 66].",이름이 'SIRTriage-'로 시작한다.,59
+Q26,절차,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,14.2,Security Hub CSPM 발견사항은 수집 후 워크플로 상태가 어떻게 바뀌나요?,"결론: Security Hub CSPM 발견사항은 수집되면 워크플로 상태가 NEW에서 NOTIFIED로 바뀝니다. 이어 자동 트리아지가 진행되며, 이 변경으로 해당 발견사항은 기본 CSPM 발견사항 보기에서 제외됩니다. 트리아지 결과가 정상/예상된 활동으로 판단되면 노트가 추가되고 워크플로 상태는 SUPPRESSED로 갱신됩니다. [Page 79][Page 69]","수집 시 NEW → NOTIFIED(기본 뷰에서 사라짐), 양성/예상 활동으로 판단되면 SUPPRESSED. 자동화 규칙은 priority 10으로 배포되어 사용자 규칙으로 재정의 가능.",72-73
+Q27,절차,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,7.5,케이스 댓글 추가 이벤트의 EventBridge detail-type 값은?,"EventBridge에서 케이스 댓글이 추가될 때의 detail-type 값은 ""Case Comment Added""입니다. 이는 고객이 추가하든 AWS Responder가 추가하든 동일하게 사용됩니다. 참고: [Page 126], [Page 125].","""Case Comment Added"" (source는 aws.security-ir).","118, 124, 173"
+Q28,멀티홉,어려움,PARTIAL,1,False,"에이전트 답변은 일부 핵심 내용을 포함하고 있으나, 관리 계정에 AWSServiceRoleForSecurityIncidentResponse_Triage SLR 생성에 대한 언급이 빠져 있어 중요한 내용이 누락되었습니다.",False,_Triage,,3,True,생성 실패: 근거는 검색됐지만 답변에 반영 안 됨,36.8,콘솔 대신 API/CLI로 온보딩하면 콘솔 방식과 달리 직접 해야 하는 작업은?,"결론: API/CLI로 온보딩하면 콘솔의 가입/마법사가 해주는 단계를 직접 명령으로 수행해야 합니다.
+
+- AWS Organizations에서 서비스 액세스 활성화를 직접 실행해야 합니다: aws organizations enable-aws-service-access --service-principal security-ir.amazonaws.com [Page 50][Page 51].
+- 관리 계정 또는 위임 관리자 계정으로 직접 로그인한 뒤, aws security-ir create-membership로 멤버십을 생성하고 최소 2명의 Incident Response Team 정보를 JSON으로 제공해야 하며(필수), 필요 시 list-memberships/get-membership로 확인도 직접 수행합니다 [Page 50][Page 51].
+- 사전에 조직 All Features 활성화, 위임 관리자 계정에 AdministratorAccess 등 필수 권한/전제를 직접 충족해야 합니다 [Page 20][Page 22][Page 23].
+- 반면 콘솔은 회원 계정 선택과 팀원 입력을 화면에서 처리합니다(가입·멤버십 계정 선택, 팀 구성 UI 제공) [Page 23][Page 25].",관리 계정에 AWSServiceRoleForSecurityIncidentResponse_Triage SLR 직접 생성(aws iam create-service-linked-role --aws-service-name triage.security-ir.amazonaws.com)과 enable-aws-service-access로 trusted access 활성화. 팀원은 최소 2명 지정.,"42-43, 47, 107"
+Q29,멀티홉,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,SendCommand,,2,,,20.5,EC2 Triage를 쓰려면 무엇이 필요한가요?,"EC2 Triage를 사용하려면 각 계정에 “Containment with EC2 Triage” CloudFormation 템플릿을 배포하고, 관리 계정과 범위 내 모든 계정에 AWSServiceRoleForSecurityIncidentResponse_Triage 서비스 연결 역할(SLR)이 있어야 합니다 [Page 78][Page 59][Page 162]. 대상 EC2 인스턴스에는 SSM Agent가 설치·실행 중이어야 하며, 온라인 상태로 Systems Manager에 의해 관리되어야 합니다(적절한 IAM 인스턴스 프로파일과 SSM 엔드포인트 네트워크 연결 필요) [Page 48][Page 49][Page 78]. 또한 지원되는 운영 체제를 실행해야 합니다: Linux(Amazon Linux 2/2023, Ubuntu 18.04–24.04, RHEL 7–9, CentOS 7–8, SLES 12–15, Debian 10–12) 및 Windows(Windows Server 2012 R2, 2016, 2019, 2022) [Page 49]. 콘솔 온보딩 시 SLR은 자동 생성되지만, API/CLI로 온보딩한 경우에는 보안 사고 대응을 활성화하고 위임 관리자 권한으로 SLR을 수동 생성해야 할 수 있습니다 [Page 59][Page 49][Page 162].","'Containment with EC2 Triage' 템플릿 배포(AWSSecurityIncidentResponseInvestigationPolicy 추가, ssm:SendCommand 포함), 인스턴스에 SSM Agent 설치·실행, Systems Manager 관리 대상(인스턴스 프로파일·엔드포인트 연결), 지원 OS.","27, 34, 41-42, 71"
+Q30,멀티홉,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,SLR,,1,,,22.0,멤버십을 취소하면 어떤 일이 일어나고 사용자가 추가로 해야 할 일은?,"멤버십을 취소하면 멤버십이 즉시 삭제되어 과거 케이스 데이터에 접근할 수 없고, 진행 중이거나 ‘Ready to Close’ 상태인 조사/리소스는 종료됩니다 [Page 102]. 취소 후 멤버십 사고 대응 팀 전원에게 이메일로 알림이 발송되며, 재구독 시 새 멤버십이 생성되고 이전 멤버십의 자료는 취소 전에 다운로드한 경우에만 접근할 수 있습니다 [Page 102]. 사용자가 추가로 해야 할 일은 서비스 연결 역할 AWSServiceRoleForSecurityIncidentResponse와 AWSServiceRoleForSecurityIncidentResponse_Triage를 서비스 범위에 포함됐던 모든 계정에서 수동으로 삭제하는 것입니다 [Page 103]. 또한 EventBridge에는 ‘Membership Closed’ 이벤트가 게시되므로 이를 활용해 후속 정리 작업 자동화를 트리거할 수 있습니다 [Page 129]. 참고로, AWS Organizations에서 위임된 관리자 지정을 제거해도 멤버십은 즉시 종료됩니다 [Page 103].","멤버십이 즉시 삭제되어 케이스 이력 조회 불가(미리 다운로드하지 않았다면 재가입해도 접근 불가), 진행 중 조사 종료, 팀원 전원 이메일 통지. 두 SLR은 자동 삭제되지 않으므로 범위 내 모든 계정에서 수동 삭제.",95-96
+Q31,멀티홉,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,8.9,위임 관리자 지정을 해제하면 어떻게 되나요?,"위임 관리자 지정을 해제하면, 현재 구독이 즉시 취소됩니다. 또한 해당 위임 관리자에 연결된 모든 멤버 계정이 제거되며, 모든 멤버 계정에서 AWS Security Incident Response가 더 이상 활성화되지 않습니다 [Page 112].",멤버십(구독)이 즉시 종료되고 연결된 멤버 계정도 모두 제외된다.,"96, 105"
+Q32,멀티홉,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,1,,,16.8,Opt-in 리전(예: 홍콩)에서 생성한 케이스 데이터는 어디에 저장되나요?,"결론: Opt-in 리전(예: 홍콩 ap-east-1)에서 생성한 케이스 데이터는 해당 리전에 저장되며, 이 리전에서 Security Incident Response를 활성화한 경우 중앙 관리·분석을 위해 미국 동부(버지니아 북부) us-east-1로 자동 복제됩니다 [Page 143][Page 144].  
+케이스의 로그·메타데이터·정보는 생성된 리전에 상주하며, us-east-1 복제는 중앙화 목적입니다 [Page 143].  
+또한 데이터는 다른 opt-in 리전으로는 이동하지 않으므로, 엄격한 데이터 상주 요건이 있으면 이 교차 리전 복제를 검토해야 합니다 [Page 144].",생성 리전에 남지만 us-east-1(버지니아 북부)로 자동 복제된다. opt-in 리전 간 이동은 없다.,136
+Q33,부정,보통,FAIL,0,False,"에이전트의 답변은 기대 정답과 모순되며, 보안 태세·컴플라이언스 발견사항도 트리아지한다고 잘못 설명하고 있습니다.",False,위협,,3,False,"검색 실패: 보안 태세 및 컴플라이언스 발견사항에 대한 언급이 없고, 위협 탐지 발견사항만 다룬다는 명확한 정보가 부족합니다.",29.6,이 서비스는 보안 태세·컴플라이언스 발견사항(설정 오류 등)도 트리아지하나요?,"가능합니다. 이 서비스는 Amazon GuardDuty와 AWS Security Hub CSPM에서 유입되는 발견사항을 자동으로 트리아지하며, 여기에는 보안 태세·컴플라이언스 성격의 설정 오류 등 CSPM 발견사항도 포함됩니다 [Page 76][Page 20]. CSPM 발견이 유입되면 자동 트리아지 시작 노트가 추가되고 워크플로 상태가 NEW에서 NOTIFIED로, 기대된 활동으로 판단되면 SUPPRESSED로 갱신됩니다 [Page 79]. 또한 지원되는 서드파티 CSPM/CNAPP 제품을 Security Hub CSPM과 통합해 두면 해당 발견사항도 모니터링·조사 및 트리아지 대상으로 포함됩니다 [Page 76][Page 60]. 필요 시에만 고객에게 에스컬레이션하며, 이는 검증된 조치 필요 사항을 의미합니다 [Page 9].",아니다. 위협 탐지 발견사항만 트리아지한다.,"2, 14"
+Q34,부정,보통,PARTIAL,1,False,"에이전트는 온보딩 이전의 GuardDuty 발견사항에 대한 소급 조사가 문서에 명시되어 있지 않다고 언급했지만, 기대 정답의 핵심 내용인 '소급 수집하지 않는다'는 명확히 전달하지 못했습니다.",False,케이스,,4,False,검색 실패: 온보딩 전에 생성된 GuardDuty 발견사항을 소급 조사하지 않는다는 명확한 언급이 부족합니다.,27.0,온보딩 전에 생성된 GuardDuty 발견사항도 조사해주나요?,"문서에서 확인되지 않음. AWS Security Incident Response는 GuardDuty와 Security Hub CSPM에서 “연속적으로” 보안 발견 메타데이터를 수집한다고만 명시하며, 온보딩 이전에 생성된 GuardDuty 발견사항을 소급(backfill) 조사하는지 여부는 설명되어 있지 않습니다 [Page 142].",소급 수집하지 않는다. 필요하면 온보딩 후 케이스로 제기.,15
+Q35,부정,보통,PASS,2,False,"에이전트 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,범위,,4,,,31.4,포렌식 디스크 이미징이나 공격자 귀속(attribution)도 해주나요?,"결론: 문서 기준으로 포렌식 디스크 이미징 수행이나 공격자 귀속(attribution) 제공은 명시돼 있지 않습니다(문서에서 확인되지 않음). 대신 사건 대응 중 포렌식 필요 여부를 검토하도록 안내하며[Page 86], EC2 Triage로 SSM Run Command를 사용해 EC2 인스턴스의 조사 데이터를 수집·분석할 수는 있지만 디스크 이미징에 대한 언급은 없습니다[Page 77][Page 10]. 또한 이 서비스는 로그·메타데이터를 수집·상관분석해 타임라인과 대응 권고를 제공하는 것으로 설명되며[Page 81], 원자료(콘텐츠) 대신 활동 메타데이터 위주로 다루기 때문에[Page 141] 공격자 귀속을 수행한다는 내용도 확인되지 않습니다.","아니다. 서비스 범위 밖. 로그 기반 조사만 하며 위협 헌팅, 법률·규제 가이드, 복구 실행, 귀속도 제외.",6
+Q36,부정,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,댓글,,1,,,8.0,AWS-supported 케이스에 올린 첨부파일을 AWS 엔지니어가 볼 수 있나요?,아니요. AWS-supported 케이스에서는 AWS가 케이스 첨부파일을 볼 수 없습니다. 필요한 정보는 케이스 코멘트로 공유하거나 화면 공유로 제공해야 합니다 [Page 100]. 참고로 케이스가 종료되면 업로드된 첨부파일은 7일 후 삭제됩니다 [Page 101].,볼 수 없다. 댓글이나 화면 공유로 전달해야 한다.,93
+Q37,부정,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,2,,,11.7,self-managed로 바꾼 뒤 다시 AWS-supported에서 self-managed로 되돌릴 수 있나요?,"안 됩니다. self-managed 케이스를 AWS-supported(Resolver를 AWS)로 변경해 AWS에 지원을 요청하면 상태가 Submitted로 바뀌고 기존 이력은 AWS Security Incident Response 엔지니어에게 공유되며, 그 이후에는 self-managed로 되돌릴 수 없습니다 [Page 98].",(질문 방향 주의) AWS 지원 요청 후에는 self-managed로 되돌릴 수 없다.,"91, 130"
+Q38,부정,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,AWS-supported|AWS supported|AWS 지원,,1,,,10.2,AI 조사 에이전트를 self-managed 케이스에서도 쓸 수 있나요?,"아니요. AI 조사 에이전트는 AWS‑supported 케이스에서만 제공되며, self‑managed 케이스에는 포함되지 않습니다 [Page 81], [Page 82]. 사용하려면 AWS‑supported 케이스로 접수해야 하며, 해당 에이전트는 AWS‑supported 케이스 생성 시 자동 활성화됩니다 [Page 83].",불가. AWS-supported 케이스에서만 동작.,"19, 74"
+Q39,부정,보통,PASS,2,False,"에이전트의 답변은 고객 관리형 KMS 키(CMK)와 FIPS 140-3이 지원되지 않는다는 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",True,,,2,,,11.6,고객 관리형 KMS 키(CMK)와 FIPS 140-3을 지원하나요?,"아니요. AWS Security Incident Response는 고객 관리형 KMS 키(CMK)를 지원하지 않습니다. 이 서비스는 사례 및 첨부 데이터의 암호화를 위해 AWS KMS와 연동하지만, 고객 관리형 키 사용은 불가합니다 [Page 141]. 또한 FIPS 140-3는 현재 지원되지 않습니다 [Page 140].",둘 다 지원하지 않는다.,133-134
+Q40,부정,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,HITRUST,,1,,,8.7,이 서비스는 HIPAA Eligible Service인가요?,"아니요. AWS Security Incident Response는 HIPAA Eligible Service가 아니며 AWS BAA(사업 제휴 계약) 범위에도 포함되지 않습니다 [Page 176]. 다만 이 서비스는 고객 데이터(ePHI 포함)를 생성·수신·처리·저장·전송하지 않으므로, HIPAA 지정 환경에서도 보안 이벤트 모니터링과 대응 목적으로 사용할 수 있습니다 [Page 176].","아니다(BAA 대상 아님). 다만 ePHI를 다루는 환경에서 함께 사용할 수 있고, HITRUST CSF 인증을 받았다.",168-169
+Q41,부정,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 조사에 사용된 로그 원본을 고객에게 제공하지 않는다는 점을 명확히 하고 있습니다.",False,요약,,4,,,35.0,조사에 쓴 로그 원본을 고객에게 제공하나요?,"결론: 문서 기준으로 “조사에 사용된 원본 로그를 별도로 고객에게 제공한다”는 내용은 명시되어 있지 않습니다. 대신, 조사에 사용된 로그와 메타데이터는 고객의 AWS 환경에서 수집되어 해당 케이스에 연동되고, 고객이 검토할 수 있도록 기본 90일간 보존됩니다 [Page 141][Page 142]. 또한 권역 간 분석을 위해 복제되는 것은 탐지 메타데이터뿐이며, 상세 로그나 원시 데이터는 포함되지 않습니다 [Page 144]. 아울러 조사 과정에서 필요한 경우 고객이 추가 로그나 증거를 제공해 달라는 요청을 받을 수 있습니다 [Page 95].",아니다. 요약과 결론만 케이스 노트로 공유.,2
+Q42,환각함정,어려움,PASS,2,False,"에이전트의 답변은 한국어 지원이 문서에 없음을 정확히 언급하고 있으며, 전담 언어와 일본어 지원 시간도 명시하고 있어 기대 정답의 핵심 내용을 모두 포함하고 있습니다.",False,,한국어 지원 시간,2,,,14.7,한국어 지원은 어떤 시간대에 제공되나요?,"문서에서 한국어 지원 시간은 확인되지 않습니다. 현재 명시된 언어는 전용 영어 지원(글로벌)과 일본어 지원(일본 표준시 기준 평일 09:00–17:00, 공휴일 제외)뿐입니다 [Page 15], [Page 197].","문서에 한국어 지원 언급이 없다. 전담은 영어, 제한적 일본어만 명시. 모른다고 답해야 정답.",8
+Q43,환각함정,어려움,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 문서에 명시된 내용과 일치합니다.",True,,,2,,,28.8,Microsoft Defender for Cloud 발견사항을 직접 연동하는 방법은?,"1. 상황 요약
+- Microsoft Defender for Cloud의 발견사항을 AWS 보안 사고 대응에 “직접” 연동하는 공식 경로는 AWS Security Hub CSPM의 서드파티 통합을 통해 유입시키는 것입니다. 이렇게 유입된 서드파티 발견사항은 자동 트리아지 대상이 되며, 필요 시 선제적 케이스가 생성됩니다 [Page 76][Page 21]. 
+- Security Hub CSPM 외의 별도 직접 연동 경로는 문서에서 확인되지 않음.
+
+2. 관련 대응 절차
+- Security Incident Response 온보딩 완료 후 진행 [Page 22].
+- Security Hub CSPM에서 서드파티 통합 활성화
+  - Security Hub CSPM 콘솔 > Integrations에서 해당 벤더(Defender for Cloud에 해당하는 통합)를 활성화합니다. 일부 서드파티 통합은 AWS Marketplace 구독 및 벤더 측 설정이 필요할 수 있습니다. 통합 화면의 안내에 따라 구성합니다 [Page 76].
+  - Organizations 전반에 적용하려면 Security Hub CSPM의 Organizations 통합을 설정합니다(필요 시) [Page 76].
+- 통합 상태 확인
+  - Security Hub CSPM 콘솔 > Integrations에서 통합 상태가 “Accepting findings”인지 확인합니다 [Page 60].
+- 설정 유의사항
+  - Security Hub CSPM의 표준/컨트롤은 켜지 않아도 됩니다. 보안 사고 대응 관점에서는 벤더 통합만으로 충분합니다 [Page 21][Page 60].
+- 연동 후 동작
+  - 서드파티에서 유입되는 발견사항은 자동 트리아지 되어 선제적 케이스 생성 여부가 판단됩니다 [Page 21].
+
+3. 확인해야 할 사항
+- 호환성: Defender for Cloud가 Security Hub CSPM에 통합되어 발견사항을 전달하는지 확인하십시오. 문서에 명시된 “지원 목록”에 없더라도 Security Hub CSPM으로 들어오는 서드파티 발견사항은 우선적으로 수집·처리(베스트 에포트)될 수 있습니다. 추가 지원 논의가 필요하면 AWS Support/TAM에 문의하십시오 [Page 22].
+- 소급 수집 불가: 온보딩 이전에 생성된 발견사항은 소급 수집되지 않습니다. 온보딩 완료 후 생성된 발견사항부터 유입됩니다 [Page 22].
+
+4. 권장 대응 방향
+- 표준 경로인 Security Hub CSPM 서드파티 통합을 사용해 Defender for Cloud 발견사항을 유입시키십시오.
+- 통합 상태가 “Accepting findings”인지 주기적으로 점검하고, 발견사항 유입 후 자동 트리아지/케이스 생성 흐름을 모니터링하십시오.
+- 표준/컨트롤은 필요 시에만 사용하고, 벤더 통합 설정에 집중하십시오.
+- 공식 지원 확대가 필요하면 AWS Support/TAM을 통해 협의하십시오.
+
+5. 참고 문서 및 페이지
+- 서드파티 통합 개요/활성화(마켓플레이스 필요 가능성, Organizations 통합): [Page 76]
+- 통합 상태 확인(“Accepting findings”): [Page 60]
+- 표준/컨트롤 불필요, 서드파티 발견사항 자동 트리아지 및 선제적 케이스: [Page 21]
+- 지원되지 않은(목록 외) 도구의 베스트 에포트 수집 및 Support/TAM 문의, 소급 수집 불가: [Page 22]","문서에 없다. 서드파티는 Security Hub CSPM 통합을 통해 수집되며, 명시된 도구는 CrowdStrike Falcon, Lacework, Trend Micro Cloud One. 목록 외 도구는 best-effort. SIEM은 직접 수집하지 않는다.","14-15, 25, 69"
+Q44,환각함정,어려움,PARTIAL,1,False,"에이전트는 무료 구간과 과금 기준을 언급했지만, 구체적인 금액이 없다는 점을 명확히 하지 않아 중요한 내용이 빠졌습니다.",True,,,2,,문서에 없는 내용을 답함(환각 의심),17.4,월 구독 요금은 정확히 얼마인가요?,"고정 월 구독 요금은 없습니다. Enterprise Support 또는 Unified Operations 고객은 추가 비용 없이 포함되며, Cost Explorer나 CUR에도 별도 청구가 나타나지 않습니다 [Page 67]. 그 외 고객은 “수집된 보안 파인딩 수” 기반의 종량 과금이며, 매월 처음 10,000건은 무료입니다(자세한 단가는 별도 가격 페이지 참조) [Page 67]. 또한 본 서비스 요금에는 GuardDuty 등 탐지 소스나 기타 AWS 서비스 사용료는 포함되지 않습니다 [Page 75].","문서에 구체 금액이 없다. 무료 구간(월 10,000건)과 과금 기준(수집 건수)만 있고 가격 페이지를 참조하라고 한다.",60
+Q45,문서모순,어려움,PASS,2,False,"에이전트 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 또한, 상충되는 내용을 잘 설명하고 있습니다.",True,,,1,,,12.1,Closed 된 케이스를 다시 열 수 있나요?,"아니요. Close Case로 영구 종료(permanently closed)된 케이스는 다시 열 수 없으며, 이후에는 읽기 전용으로만 확인할 수 있습니다 [Page 102]. 다만 AWS가 생성한 케이스(예: Proactive case)는 진행 중에는 업데이트·해결(resolve)·재오픈이 가능하지만, 일단 영구 종료되면 재오픈할 수 없습니다 [Page 97][Page 102]. 추가 지원이 필요하면 새 케이스를 열거나 AWS Support에 문의하십시오 [Page 96].","Managing Cases 절은 영구 종료 후 재오픈 불가(읽기 전용)라고 하지만, 엔지니어 협업 절과 AWS 생성 케이스 절에는 재오픈 가능하다는 문장이 있다. 공식 상태 설명(재오픈 불가)을 우선하되 상충을 짚어주면 최선.","89-91, 95"
+Q46,문서모순,어려움,PARTIAL,1,False,"에이전트 답변은 고객이 케이스를 닫는다는 핵심 내용을 포함하고 있지만, 엔지니어가 닫는다는 부분과 무응답 시 자동 종료에 대한 언급이 빠져 있어 중요한 내용이 누락되었습니다.",True,,,1,False,검색 실패: 고객이 최종 종료할 수 있다는 내용과 엔지니어가 닫는 조건이 명시되어 있지 않음.,12.9,케이스를 닫는 주체는 누구인가요?,"결론: 케이스는 회원(귀 조직) 측에서 권한 있는 사용자가 콘솔의 Close Case(또는 Action → Close Case)로 직접 닫습니다 [Page 101].
+
+보완 설명:
+- AWS 지원 케이스는 어떤 상태에서도 닫을 수 있으며, Ready to Close 이전에 닫으면 AWS Security Incident Response 엔지니어가 해당 케이스 작업을 중단하도록 요청하는 의미가 됩니다 [Page 101].
+- Ready to Close는 더 이상 추가 작업이 없음을 뜻하며, 케이스를 영구 종료하면 재개할 수 없습니다 [Page 102].
+
+참고 페이지: [Page 101], [Page 102]","개요에는 '고객만 닫을 수 있고 AWS는 Ready to Close까지만'이라 하지만, 엔지니어 협업 절에는 엔지니어가 닫는다는 조건이 나오고 무응답 시 자동 종료도 있다. 기본은 고객이 최종 종료.","5, 58, 87, 89, 94"
+Q47,시나리오,어려움,PARTIAL,1,False,"핵심 내용은 포함되어 있으나, 기대 정답의 구체적인 절차와 순서가 명확히 제시되지 않아 중요한 내용이 빠진 것으로 판단됩니다.",False,케이스,,4,False,"검색 실패: 기대 정답의 핵심 내용인 '즉시 AWS-supported 케이스 생성', '봉쇄', '조사', '근절·복구' 단계에 대한 구체적인 절차가 문서에 포함되어 있지 않음.",38.6,AWS 계정에서 Access Key가 외부에 노출된 것으로 의심됩니다. 해당 자격 증명이 이미 악용되었을 가능성이 있다면 어떤 순서로 대응해야 하나요?,"1. 상황 요약
+- IAM Access Key가 외부에 노출되어 악용 가능성이 있는 상태로 판단됩니다. 우선 영향 최소화를 위한 즉각적 격리(자격 증명 회전) 후, 사용 흔적을 조사하고, 재발 방지를 위한 권한/자격 증명 체계를 개선해야 합니다. [Page 55][Page 107][Page 149]
+
+2. 관련 대응 절차
+- 즉각적 격리(Containment)
+  - 노출된 자격 증명은 신속히 회전(rotate)해 영향 범위를 줄입니다. Security Incident Response의 자동 격리·자격 증명 회전 같은 컨테인먼트 액션은 기본 활성화가 아니므로, 실행하려면 사전에 필요한 권한이 있어야 합니다. [Page 55]
+- 조사(Investigation)
+  - CloudTrail Event history에서 최근 활동을 확인하고, 누가 어떤 요청을 언제·어디서(IP) 보냈는지 식별합니다. 지속 기록이 필요하면 멀티리전 Trail 또는 CloudTrail Lake 데이터 스토어를 구성해 전 리전 활동을 포착합니다(권장: 멀티리전 Trail). [Page 107][Page 109]
+- 복구 및 재발 방지(Eradication/Recovery)
+  - 장기 액세스 키 대신 임시 보안 자격 증명과 IAM 역할 사용으로 전환합니다(필요 시에만 장기 키 사용, 정기적 회전). [Page 149][Page 157][Page 151]
+  - 최소 권한 원칙 적용, 정책에 조건(예: SSL 요구) 추가, IAM Access Analyzer로 정책 유효성 검증, 필요 시 MFA 보호된 API 액세스 요구를 적용합니다. [Page 153]
+
+3. 확인해야 할 사항
+- 컨테인먼트(자격 증명 회전 등) 수행을 위한 권한이 사전에 준비되어 있는지 확인합니다(기본 미활성화). [Page 55]
+- CloudTrail이 전 리전에서 활동을 수집하도록 설정되어 있는지, 최근 90일 이전의 포렌식이 필요하면 Trail/S3 또는 CloudTrail Lake 구성이 있는지 확인합니다. [Page 107]
+- CloudTrail 이벤트에서 해당 키로 수행된 API 호출, 소스 IP, 호출 주체, 시간대 등 핵심 지표를 확보합니다. [Page 107][Page 109]
+
+4. 권장 대응 방향
+- 우선순위는 신속한 자격 증명 회전(격리) → CloudTrail 기반 악용 범위 파악 → 임시 자격 증명·역할 기반 구조로 전환 및 최소 권한·MFA 등 강화입니다. [Page 55][Page 107][Page 149][Page 153][Page 157]
+
+5. 참고 문서 및 페이지
+- 컨테인먼트(자격 증명 회전) 개요와 권한 전제조건: [Page 55]
+- CloudTrail과 이벤트 분석(이벤트 기록, 멀티리전 Trail 권장, 이벤트에서 확인 가능한 항목): [Page 107][Page 109]
+- 임시 자격 증명·역할 권장, 장기 키 회전 권장: [Page 149][Page 151][Page 157]
+- 최소 권한, 정책 조건, MFA 보호된 API, IAM Access Analyzer: [Page 153]","문서 기준 대응 순서: (1) 즉시 AWS-supported 케이스 생성, 유형 'Active Security Incident'(첫 응답 15분). 최초 징후 시점을 시작일로, 관련 계정 ID와 위협 IP를 기재. (2) 봉쇄: 봉쇄 역할(StackSet)이 배포되고 사전 승인되어 있으면 엔지니어가 AWSSupport-ContainIAMPrincipal로 해당 IAM 주체에 deny-all 정책을 붙인다(가역적, 포렌식용으로 주체는 보존). 승인이 없으면 수동 가이드를 받는다. 자격 증명 교체는 봉쇄 예시로 언급됨. (3) 조사: CloudTrail 등 로그 기반. AI 에이전트가 CloudTrail·IAM·Cost Explorer를 조회. (4) 근절·복구: 침해 계정·리소스 제거와 취약점 조치. AWS는 권고만 하고 실행은 고객 몫. 문서에 없는 절차를 사실처럼 단정하면 감점.","4, 48, 73-74, 77-79, 82-84"
+Q48,시나리오,보통,PASS,2,False,"에이전트의 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다. 케이스가 없는 상황에 대한 정상적인 판단과 검증 방법을 잘 설명했습니다.",False,아카이브; SIRTriage-|EventBridge|SIR,,1,,,13.8,온보딩한 지 일주일이 지났는데 케이스가 하나도 안 생겼어요. 서비스가 제대로 동작하는 건가요?,"네, 일주일 동안 케이스가 없을 수 있으며 정상 동작일 수 있습니다. 열린 케이스가 없고 GuardDuty의 Archived 탐지가 꾸준히 보이면 정상으로 판단합니다 [Page 65]. 며칠이 지나도 케이스도 없고 Archived 탐지도 없다면 탐지 소스와 자동 파이프라인 연결(검증 Step 2·3)을 확인하세요 [Page 65]. 검증을 위해 GuardDuty 샘플/테스트 도메인 탐지를 발생시켜 보면 약 5분 내 나타나고 자동으로 triage되어 Archived(SecHub는 SUPPRESSED) 처리되며, 이 경우에도 케이스는 생성되지 않는 것이 정상입니다 [Page 61]. 또한 온보딩 이전에 생성된 탐지는 소급 수집되지 않으므로, 그런 건 케이스로 수동 접수해야 표시됩니다 [Page 22].","케이스가 없는 것은 정상일 수 있다(양성 발견사항은 케이스 없이 아카이브). 동작 신호는 GuardDuty의 아카이브된 발견사항과 'SIRTriage-' suppression rule. 며칠이 지나도 케이스와 아카이브가 모두 없으면 멤버 계정의 'SIR' EventBridge 규칙, Triage SLR, GuardDuty 활성화 여부를 확인하고 테스트 도메인(guarddutyc2activityb.com)으로 검증.","54, 58-59, 61"
+Q49,시나리오,보통,PASS,2,False,"에이전트 답변은 기대 정답의 핵심 내용을 모두 포함하고 있으며, 틀린 내용이 없습니다.",False,S3,,4,,,29.6,S3 버킷이 공개되어 데이터가 유출된 것 같습니다. AWS가 복구와 규제기관 신고까지 해주나요?,"아니요. AWS는 보안 사고 시 복구·차단을 대신 실행하거나 규제기관 신고(침해 통지·규제 보고 등)를 대행하지 않습니다. 복구와 대응 실행은 고객 책임이며, AWS Incident Response 엔지니어는 권고사항만 제공합니다 [Page 14]. 또한 법률·규제 관련 안내나 신고/제출 업무는 서비스 범위 밖입니다 [Page 13]. 이는 AWS 보안의 공동 책임 모델에도 부합하며, 고객이 자신의 데이터와 구성, 대응을 책임집니다 [Page 173].","케이스를 열면 조사와 봉쇄(사전 승인 시 AWSSupport-ContainS3Resource로 외부 접근 차단, 객체는 보존·가역적)를 지원한다. 복구·리메디에이션 실행은 범위 밖이라 권고만 하고, 침해 신고 등 법률·규제 가이드도 범위 밖이다.","6, 78-79"
