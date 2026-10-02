@@ -1,0 +1,11 @@
+type=USER_ACCT msg=audit(1642724221.475:149): pid=1716 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:accounting acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+type=CRED_ACQ msg=audit(1642724221.479:150): pid=1716 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:setcred acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+type=LOGIN msg=audit(1642724221.479:151): pid=1716 uid=0 old-auid=4294967295 auid=0 tty=(none) old-ses=4294967295 ses=36 res=1
+type=USER_START msg=audit(1642724221.483:152): pid=1716 uid=0 auid=0 ses=36 msg='op=PAM:session_open acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+type=CRED_DISP msg=audit(1642724221.491:153): pid=1716 uid=0 auid=0 ses=36 msg='op=PAM:setcred acct="root" exe="/usr/sbin/cron" hostname=? addr=? terminal=cron res=success'
+type=SYSCALL msg=audit(1642746582.129:529): arch=c000003e syscall=1 success=yes exit=44953 a0=6 a1=55688bbf9b10 a2=af99 a3=0 items=0 ppid=23661 pid=23662 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts1 ses=4294967295 comm="apparmor_parser" exe="/sbin/apparmor_parser" key=(null)
+type=AVC msg=audit(1642746582.129:529): apparmor="STATUS" operation="profile_replace" info="same as current profile, skipping" profile="unconfined" name="/sbin/dhclient" pid=23662 comm="apparmor_parser"
+type=PROCTITLE msg=audit(1642746582.129:529): proctitle=61707061726D6F725F706172736572002D72002D54002D57002F6574632F61707061726D6F722E642F7362696E2E6468636C69656E74
+type=USER_LOGIN msg=audit(1642761574.840:683): pid=14362 uid=0 auid=1002 ses=100 msg='op=login id=1002 exe="/usr/sbin/sshd" hostname=172.19.131.174 addr=172.19.131.174 terminal=/dev/pts/0 res=success'
+type=USER_CMD msg=audit(1642999086.239:2230): pid=27966 uid=1002 auid=4294967295 ses=4294967295 msg='cwd="/var/www/intranet.smith.russellmitchell.com/wp-content/uploads/2022/01" cmd=636174202F6574632F736861646F77 terminal=pts/1 res=success'
+type=SERVICE_START msg=audit(1642723752.624:381): pid=1 uid=0 auid=4294967295 ses=4294967295 msg='unit=phpsessionclean comm="systemd" exe="/lib/systemd/systemd" hostname=? addr=? terminal=? res=success'

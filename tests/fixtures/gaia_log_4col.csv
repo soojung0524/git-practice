@@ -1,0 +1,5 @@
+id,datetime,service,message
+1,2021-08-01,dbservice2,"2021-08-01 00:00:01,302 | INFO | 0.0.0.2 | dbservice2 | permission_operate.py -> permission_operation -> 35 | 7a379c0e7ccf9a58 | the list of all available services are redisservice1: http://0.0.0.1:9386, redisservice2: http://0.0.0.2:9387
+"
+2,2021-08-01,dbservice2,"2021-08-01 00:00:01,315 | INFO | 0.0.0.2 | dbservice2 | permission_operate.py -> permission_operation -> 51 | 7a379c0e7ccf9a58 | now call service:redisservice2, inst:http://0.0.0.2:9387 as a downstream service
+"

@@ -1,0 +1,5 @@
+[Mon Jan 24 03:57:26.696483 2022] [authz_core:error] [pid 25711] [client 172.19.131.174:36072] AH01630: client denied by server configuration: /var/www/intranet.smith.russellmitchell.com/.hta
+[Mon Jan 24 03:57:27.362792 2022] [php7:error] [pid 25876] [client 172.19.131.174:36076] script '/var/www/intranet.smith.russellmitchell.com/admin.php' not found or unable to stat
+[Mon Jan 24 06:25:03.954255 2022] [mpm_prefork:notice] [pid 449] AH00163: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 configured -- resuming normal operations
+mkdir failed on directory /var/run/samba/msg.lock: Permission denied
+--2022-01-24 03:59:22--  https://github.com/ait-aecid/wphashcrack/archive/refs/tags/v0.1.tar.gz
