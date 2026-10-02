@@ -1,0 +1,11 @@
+Jan 21 00:00:09 dnsmasq[3468]: query[A] example.com from 10.143.0.103
+Jan 21 00:00:09 dnsmasq[3468]: forwarded example.com to 192.168.231.254
+Jan 21 00:00:09 dnsmasq[3468]: reply example.com is 195.128.194.168
+Jan 21 00:02:27 dnsmasq[3468]: query[AAAA] db.local.clamav.net from 172.19.130.4
+Jan 21 06:42:16 dnsmasq[3468]: query[PTR] 4.130.19.172.in-addr.arpa from 172.19.130.4
+Jan 21 06:42:16 dnsmasq[3468]: query[MX] morris.russellmitchell.com from 172.19.130.4
+Jan 21 00:14:21 dnsmasq[3468]: query[SRV] _http._tcp.security.ubuntu.com from 10.143.0.103
+Jan 21 00:02:27 dnsmasq[3468]: query[TXT] current.cvd.clamav.net from 172.19.130.4
+Jan 21 00:02:37 dnsmasq[3468]: cached db.local.clamav.net is <CNAME>
+Jan 21 05:55:17 dnsmasq[3468]: nameserver 127.0.0.1 refused to do a recursive query
+Jan 21 07:05:20 dnsmasq[3468]: failed to access /etc/dnsmasq.d/dnsmasq-resolv.conf: No such file or directory

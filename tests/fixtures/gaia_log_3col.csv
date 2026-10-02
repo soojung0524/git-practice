@@ -1,0 +1,13 @@
+datetime,service,message
+2021-07-01,webservice1,"2021-07-01 09:57:04,258 | ERROR | 0.0.0.1 | webservice1 | retry_func.py -> wrapper -> 40 | 22741016938865b0 | Try to get redisservice1 service`s inst, retry for  for 1 time...
+"
+2021-07-01,webservice1,"2021-07-01 09:57:04,260 | ERROR | 0.0.0.1 | webservice1 | retry_func.py -> wrapper -> 40 | 22741016938865b0 | Try to get redisservice1 service`s inst, retry for  for 2 time...
+"
+2021-07-01,webservice1,"2021-07-01 09:57:04,262 | ERROR | 0.0.0.1 | webservice1 | retry_func.py -> wrapper -> 40 | 22741016938865b0 | Try to get redisservice1 service`s inst, retry for  for 3 time...
+"
+2021-07-01,webservice1,"2021-07-01 09:57:04,262 | ERROR | 0.0.0.1 | webservice1 | web_helper.py -> get_inst_from_services -> 224 | 22741016938865b0 |a position error occurred while obtaining the inst of the redisservice1: 
+"
+2021-07-01,webservice1,"2021-07-01 09:57:04,268 | ERROR | 0.0.0.1 | webservice1 | web_helper.py -> web_service_resource -> 48 | 22741016938865b0 | all downstream services redisservice1 and redisservice2 are unavailable
+"
+2021-07-01,webservice1,"2021-07-01 10:54:21,907 | INFO | 0.0.0.1 | 172.17.0.3 | webservice1 | c124e30fb40651dc | the list of all available services are redisservice1: http://0.0.0.1:9386, redisservice2: http://0.0.0.2:9387
+"

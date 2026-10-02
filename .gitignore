@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Dataset (too large / environment-specific, see data/README.md)
+data/*
+!data/README.md
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Output artifacts produced by main.py
+output/
+*.jsonl
+*.pkl
+*.pickle
+
+# Claude Code local runtime state
+.claude/scheduled_tasks.lock

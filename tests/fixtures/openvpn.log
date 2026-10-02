@@ -1,0 +1,10 @@
+2022-01-21 06:30:01 192.168.230.95:60795 [twhite] Peer Connection Initiated with [AF_INET]192.168.230.95:60795
+2022-01-21 00:09:11 jhall/192.168.230.165:46011 VERIFY OK: depth=1, C=AT, ST=Vienna, L=Vienna, O=Some Organisation GmbH, CN=OpenVPN CA, emailAddress=admin@organisation.cyberrange.at
+2022-01-21 00:09:11 jhall/192.168.230.165:46011 VERIFY KU OK
+2022-01-21 00:09:11 jhall/192.168.230.165:46011 VERIFY EKU OK
+2022-01-21 00:09:11 jhall/192.168.230.165:46011 peer info: IV_VER=2.4.4
+2022-01-21 06:30:01 twhite/192.168.230.95:60795 MULTI: Learn: 10.9.0.6 -> twhite/192.168.230.95:60795
+2022-01-21 06:30:03 twhite/192.168.230.95:60795 SENT CONTROL [twhite]: 'PUSH_REPLY,redirect-gateway def1,block-outside-dns,route 10.9.0.1,topology net30,ping 10,ping-restart 120,ifconfig 10.9.0.6 10.9.0.5,peer-id 0,cipher AES-256-CBC' (status=1)
+2022-01-21 08:09:33 jhall/192.168.230.165:46011 [jhall] Inactivity timeout (--ping-restart), restarting
+2022-01-23 14:54:54 jhall/192.168.230.165:59814 TLS Error: TLS key negotiation failed to occur within 60 seconds (check your network connectivity)
+2022-01-21 06:30:01 192.168.230.95:60795 TLS: Initial packet from [AF_INET]192.168.230.95:60795, sid=30d47335 8140d551

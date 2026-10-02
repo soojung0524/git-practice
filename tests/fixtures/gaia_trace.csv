@@ -1,0 +1,5 @@
+timestamp,host_ip,service_name,trace_id,span_id,parent_id,start_time,end_time,url,status_code,message
+2021-07-01 14:58:03,0.0.0.3,webservice2,47b56e46e21a0530,d1db8a029b58d4ce,0,2021-07-01 14:57:52.377571,2021-07-01 14:58:02.741081,http://0.0.0.3:9381/web_login_service,500,request call function 1 webservice2.web_login_service
+2021-07-01 14:58:27,0.0.0.3,webservice2,23f4481bc3c5217f,64cf3f68907b8b12,0,2021-07-01 14:58:24.092726,2021-07-01 14:58:27.226394,http://0.0.0.3:9381/web_login_service,200,request call function 1 webservice2.web_login_service
+2021-07-01 10:54:23,0.0.0.4,dbservice1,c124e30fb40651dc,58ac80ceea500f66,8b3e4a4003c5119c,2021-07-01 10:54:22.632751,2021-07-01 10:54:23.151922,http://0.0.0.4:9388/db_login_methods?uuid=a3036736-da17-11eb-9811-0242ac110003&user_id=ToeLCkHR,200,request call function 1 dbservice1.db_login_methods
+2021-07-01 14:58:24,0.0.0.4,dbservice1,fc80cb49734064c,fa6ac0cfb325b70,bf8f0b5ac0800698,2021-07-01 14:58:03.840086,2021-07-01 14:58:24.147245,http://0.0.0.4:9388/db_login_methods?uuid=ae05ac76-da39-11eb-a832-0242ac110004&user_id=OVLDMHZf,500,request call function 1 dbservice1.db_login_methods

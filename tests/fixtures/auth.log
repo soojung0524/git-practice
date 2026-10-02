@@ -1,0 +1,16 @@
+Jan 23 06:39:01 intranet-server CRON[23064]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jan 23 06:39:01 intranet-server CRON[23064]: pam_unix(cron:session): session closed for user root
+Jan 23 16:23:04 intranet-server sshd[15014]: pam_unix(sshd:session): session closed for user jhall
+Jan 23 16:30:46 intranet-server sshd[25184]: Accepted publickey for jhall from 172.19.131.174 port 49828 ssh2: RSA SHA256:8wFbiaYPevKS/wYKnePO20v0iymTcrRh4Kr+1uRS1UM
+Jan 23 16:30:46 intranet-server sshd[25184]: pam_unix(sshd:session): session opened for user jhall by (uid=0)
+Jan 24 03:56:47 intranet-server sshd[27751]: Did not receive identification string from 172.19.131.174 port 40876
+Jan 23 16:23:04 intranet-server systemd-logind[957]: Removed session 111.
+Jan 23 16:30:47 intranet-server systemd-logind[957]: New session 271 of user jhall.
+Jan 23 16:30:47 intranet-server systemd: pam_unix(systemd-user:session): session opened for user jhall by (uid=0)
+Jan 24 04:37:40 intranet-server su[27950]: Successful su for jhall by www-data
+Jan 24 04:37:40 intranet-server su[27950]: + /dev/pts/1 www-data:jhall
+Jan 24 04:37:58 intranet-server sudo:    jhall : TTY=pts/1 ; PWD=/var/www/intranet.smith.russellmitchell.com/wp-content/uploads/2022/01 ; USER=root ; COMMAND=list
+Jan 24 04:38:06 intranet-server sudo:    jhall : TTY=pts/1 ; PWD=/var/www/intranet.smith.russellmitchell.com/wp-content/uploads/2022/01 ; USER=root ; COMMAND=/bin/cat /etc/shadow
+Jan 24 04:38:06 intranet-server sudo: pam_unix(sudo:session): session opened for user root by (uid=0)
+Jan 24 04:38:06 intranet-server sudo: pam_unix(sudo:session): session closed for user root
+Jan 20 12:54:24 davey-mail dovecot: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=shane.watson rhost=192.168.231.56  user=shane.watson
