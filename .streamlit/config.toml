@@ -1,0 +1,7 @@
+# Streamlit 테마. 프로젝트 루트의 .streamlit/ 폴더에 두세요(실행 위치 기준으로 읽습니다).
+[theme]
+base = "light"
+primaryColor = "#2563eb"
+backgroundColor = "#f5f7fb"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#0f172a"
