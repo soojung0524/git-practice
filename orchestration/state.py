@@ -24,7 +24,15 @@ from datetime import datetime
 from typing import Annotated, Any, Protocol, TypedDict
 
 from agents import AgentResult
+from correlation import (
+    CorrelationResult,
+    IncidentSelectionResult,
+    InvestigationFocus,
+)
+from guidance import SecurityGuidanceResult
 from llm import FindingInterpretation
+from report import IncidentReport
+from scenario import ScenarioDefinition, ScenarioProjection
 from src.models import Finding, NormalizedEvent
 
 
@@ -99,6 +107,27 @@ class InvestigationState(TypedDict):
     findings: list[Finding]
     errors: Annotated[dict[str, str], merge_errors]
 
+    # --- scenario mode (선택, opt-in) ---
+    # scenario_definition이 None이면 scenario 단계를 건너뛴다 = 기존 workflow와 동일하다.
+    scenario_definition: ScenarioDefinition | None
+    # 조사 대상 anchor. None이면 selection을 요청하지 않은 것이며 incident_selection도
+    # None으로 남는다(빈 결과를 만들지 않는다).
+    investigation_focus: InvestigationFocus | None
+    # 아래 3개는 scenario node들이 채운다. 각 키의 writer가 하나뿐이라 reducer가 없다.
+    scenario_projection: ScenarioProjection | None
+    correlation_result: CorrelationResult | None
+    incident_selection: IncidentSelectionResult | None
+
+    # --- Security Guidance (선택) ---
+    # security_guidance_provider를 줬을 때만 채워진다. provider 객체 자체는 State에
+    # 넣지 않는다(직렬화 대상에 외부 client가 들어가면 안 된다) - build_graph가 node
+    # closure로 주입한다.
+    security_guidance: SecurityGuidanceResult | None
+
+    # --- Incident Report (선택) ---
+    # build_report=True일 때만 채워진다. 결정론적 섹션은 LLM 없이도 완성된다.
+    incident_report: IncidentReport | None
+
     # --- LLM 해석 (선택) ---
     # interpret=True로 실행했을 때만 채워진다. Finding을 바꾸지 않는 부가 정보다.
     interpretation: FindingInterpretation | None
@@ -114,6 +143,8 @@ def new_state(
     start_time: datetime | None = None,
     end_time: datetime | None = None,
     source_types: Iterable[str] | None = None,
+    scenario_definition: ScenarioDefinition | None = None,
+    investigation_focus: InvestigationFocus | None = None,
 ) -> InvestigationState:
     """초기 State를 만든다. 모든 필드를 명시적으로 채운다(TypedDict 누락 방지)."""
     return InvestigationState(
@@ -135,6 +166,13 @@ def new_state(
         agent_findings=[],
         findings=[],
         errors={},
+        scenario_definition=scenario_definition,
+        investigation_focus=investigation_focus,
+        scenario_projection=None,
+        correlation_result=None,
+        incident_selection=None,
+        security_guidance=None,
+        incident_report=None,
         interpretation=None,
     )
 

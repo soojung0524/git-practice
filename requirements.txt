@@ -2,3 +2,6 @@ pytest>=8.0
 langgraph>=1.2
 openai>=2.0
 python-dotenv>=1.0
+langchain>=1.0
+langchain-openai>=1.0
+supabase>=2.0
