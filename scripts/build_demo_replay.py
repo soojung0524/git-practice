@@ -50,6 +50,18 @@ from agents import (  # noqa: E402
     ServerAgent,
 )
 from correlation import correlate_scenario, focus_on, select_incidents  # noqa: E402
+from demo import SCENARIOS, DemoScenario, StepSpec, get_scenario, make_steps  # noqa: E402
+from demo.scenarios import (  # noqa: E402
+    PHASE_ANALYSIS_COMPLETED,
+    PHASE_ANALYZING,
+    PHASE_COLLECTING,
+    PHASE_CORRELATING,
+    PHASE_FINDING_DETECTED,
+    PHASE_FOCUS_SELECTED,
+    PHASE_RAG_ANALYZING,
+    PHASE_RAG_COMPLETED,
+    PHASE_REPORT_READY,
+)
 from scenario import make_analysis_scenario, project_findings  # noqa: E402
 from src.models import Finding  # noqa: E402
 from src.models.finding_store import load_findings  # noqa: E402
@@ -83,27 +95,10 @@ PRESENTATION_NOTE = (
     "실제 분석 값은 source / dashboard / detail 블록에 있다."
 )
 
-PHASE_COLLECTING = "collecting"
-PHASE_FINDING_DETECTED = "finding_detected"
-PHASE_CORRELATING = "correlating"
-PHASE_FOCUS_SELECTED = "focus_selected"
-PHASE_RAG_ANALYZING = "rag_analyzing"
-PHASE_RAG_COMPLETED = "rag_completed"
-PHASE_REPORT_READY = "report_ready"
-
-STEPS: tuple[tuple[int, str, str, str, int], ...] = (
-    (0, PHASE_COLLECTING, "데이터 수집 중", "step_00_collecting.json", 2500),
-    (1, PHASE_FINDING_DETECTED, "이상 징후 탐지", "step_01_finding_detected.json", 2500),
-    (2, PHASE_CORRELATING, "상관분석", "step_02_correlation.json", 3000),
-    (3, PHASE_FOCUS_SELECTED, "조사 대상 선정", "step_03_focus_selected.json", 3000),
-    (4, PHASE_RAG_ANALYZING, "보안 가이던스 조회 중", "step_04_rag_analyzing.json", 3500),
-    (5, PHASE_RAG_COMPLETED, "보안 가이던스 완료", "step_05_rag_completed.json", 3500),
-    (6, PHASE_REPORT_READY, "보고서 생성 완료", "step_06_report_ready.json", 0),
-)
-
-STEP_COUNT = len(STEPS)
-
 GUIDANCE_NOT_STARTED = "not_started"
+# RAG를 호출하지 않은 scenario. "아직 응답이 안 왔다"가 아니라 "요청하지 않았다"는
+# 뜻이며, 보안 가이던스가 완료된 것처럼 보이지 않게 완료 상태와 구분한다.
+GUIDANCE_NOT_REQUESTED = "not_requested"
 GUIDANCE_ANALYZING = "analyzing"
 GUIDANCE_COMPLETED = "completed"
 
@@ -406,7 +401,9 @@ def extract_citation_pages(response: str) -> list[int]:
     return sorted({int(match.group(1)) for match in _PAGE_RE.finditer(response)})
 
 
-def build_guidance_block(report: dict[str, Any], status: str) -> dict[str, Any]:
+def build_guidance_block(
+    report: dict[str, Any], status: str, *, not_requested_reason: str | None = None
+) -> dict[str, Any]:
     """step 단계에 따라 공개 범위를 다르게 한 guidance 블록.
 
     status는 시연 단계 표시이며 실제 runtime 기록이 아니다(demo 블록의 phase와 짝).
@@ -427,8 +424,12 @@ def build_guidance_block(report: dict[str, Any], status: str) -> dict[str, Any]:
         "notes": None,
         "source_note": None if guidance is None else guidance["source_note"],
         "demo_derived": None,
+        # RAG를 쓰지 않은 scenario에서만 값이 있다. 왜 호출하지 않았는지 남긴다.
+        "not_requested_reason": (
+            not_requested_reason if status == GUIDANCE_NOT_REQUESTED else None
+        ),
     }
-    if guidance is None or status == GUIDANCE_NOT_STARTED:
+    if guidance is None or status in (GUIDANCE_NOT_STARTED, GUIDANCE_NOT_REQUESTED):
         return block
 
     item = guidance["items"][0] if guidance["items"] else None
@@ -470,7 +471,11 @@ def build_steps(
     selection: Any,
     anchor: Finding,
     scenario_key: str,
+    steps_spec: tuple[StepSpec, ...],
+    uses_rag: bool,
+    guidance_not_requested_reason: str | None = None,
 ) -> list[dict[str, Any]]:
+    step_count = len(steps_spec)
     focused_ids = list(selection.focused_incident_ids)
     focused = correlation.incident_by_id(focused_ids[0]) if focused_ids else None
     unselected = [item for item in correlation.incidents if item.incident_id not in set(focused_ids)]
@@ -567,6 +572,13 @@ def build_steps(
     # 아직 공개되지 않은 값은 키를 유지하고 null로 둔다(키 유무로 의미가 갈리지 않게).
     hidden_counters: dict[str, Any] = dict.fromkeys(selection_counters)
 
+    # RAG를 쓰는 scenario와 쓰지 않는 scenario에서 step 4/5의 의미가 다르다.
+    # RAG가 없으면 '보안 가이던스 완료'처럼 보이게 하지 않고, 그 자리에서 요약 분석
+    # 결과(narrative)를 공개한다.
+    middle_guidance = GUIDANCE_NOT_STARTED if uses_rag else GUIDANCE_NOT_REQUESTED
+    final_guidance = GUIDANCE_COMPLETED if uses_rag else GUIDANCE_NOT_REQUESTED
+    completed_label = "보안 가이던스 조회 완료" if uses_rag else "요약 분석 완료"
+
     plans: dict[str, dict[str, Any]] = {
         PHASE_COLLECTING: {
             "revealed": [],
@@ -574,8 +586,9 @@ def build_steps(
             "counters": hidden_counters,
             "candidates": None,
             "focused": False,
-            "guidance": GUIDANCE_NOT_STARTED,
+            "guidance": middle_guidance,
             "report": REPORT_NOT_READY,
+            "narrative": False,
             "note": COLLECTING_NOTE,
         },
         PHASE_FINDING_DETECTED: {
@@ -584,8 +597,9 @@ def build_steps(
             "counters": hidden_counters,
             "candidates": None,
             "focused": False,
-            "guidance": GUIDANCE_NOT_STARTED,
+            "guidance": middle_guidance,
             "report": REPORT_NOT_READY,
+            "narrative": False,
             "note": "anchor Finding을 처음 공개한 단계다.",
         },
         PHASE_CORRELATING: {
@@ -594,11 +608,12 @@ def build_steps(
             "counters": correlation_counters,
             "candidates": candidates_before_selection,
             "focused": False,
-            "guidance": GUIDANCE_NOT_STARTED,
+            "guidance": middle_guidance,
             "report": REPORT_NOT_READY,
+            "narrative": False,
             "note": (
-                "Window 안의 Finding과 후보 incident를 공개했고 조사 대상은 아직 고르지 "
-                "않은 단계다."
+                "Window 안의 Finding과 후보 incident를 공개했고 조사 대상은 "
+                "아직 고르지 않은 단계다."
             ),
         },
         PHASE_FOCUS_SELECTED: {
@@ -607,8 +622,9 @@ def build_steps(
             "counters": selection_counters,
             "candidates": candidates_after_selection,
             "focused": True,
-            "guidance": GUIDANCE_NOT_STARTED,
+            "guidance": middle_guidance,
             "report": REPORT_NOT_READY,
+            "narrative": False,
             "note": "anchor가 속한 incident만 조사 대상으로 선택된 단계다.",
         },
         PHASE_RAG_ANALYZING: {
@@ -619,32 +635,61 @@ def build_steps(
             "focused": True,
             "guidance": GUIDANCE_ANALYZING,
             "report": REPORT_NOT_READY,
+            "narrative": False,
             "note": "보안 가이던스 질문을 보냈고 응답은 아직 공개하지 않은 단계다.",
         },
         PHASE_RAG_COMPLETED: {
             "revealed": all_findings,
-            "timeline": focused_timeline + [workflow_timeline_entry("보안 가이던스 조회 완료")],
+            "timeline": focused_timeline + [workflow_timeline_entry(completed_label)],
             "counters": selection_counters,
             "candidates": candidates_after_selection,
             "focused": True,
             "guidance": GUIDANCE_COMPLETED,
             "report": REPORT_NOT_READY,
+            "narrative": False,
             "note": "최종 보고서에 저장된 실제 보안 가이던스를 공개한 단계다.",
+        },
+        PHASE_ANALYZING: {
+            "revealed": all_findings,
+            "timeline": focused_timeline,
+            "counters": selection_counters,
+            "candidates": candidates_after_selection,
+            "focused": True,
+            "guidance": GUIDANCE_NOT_REQUESTED,
+            "report": REPORT_NOT_READY,
+            "narrative": False,
+            "note": (
+                "조사 대상 incident의 요약 분석이 진행 중인 단계다. 이 scenario는 "
+                "보안 가이던스를 요청하지 않았다."
+            ),
+        },
+        PHASE_ANALYSIS_COMPLETED: {
+            "revealed": all_findings,
+            "timeline": focused_timeline + [workflow_timeline_entry(completed_label)],
+            "counters": selection_counters,
+            "candidates": candidates_after_selection,
+            "focused": True,
+            "guidance": GUIDANCE_NOT_REQUESTED,
+            "report": REPORT_NOT_READY,
+            "narrative": True,
+            "note": "최종 보고서에 저장된 실제 요약 분석 결과를 공개한 단계다.",
         },
         PHASE_REPORT_READY: {
             "revealed": all_findings,
             "timeline": focused_timeline
             + [
-                workflow_timeline_entry("보안 가이던스 조회 완료"),
+                workflow_timeline_entry(completed_label),
                 workflow_timeline_entry("최종 보고서 생성 완료"),
             ],
             "counters": selection_counters,
             "candidates": candidates_after_selection,
             "focused": True,
-            "guidance": GUIDANCE_COMPLETED,
+            "guidance": final_guidance,
             "report": REPORT_READY,
+            "narrative": True,
             "note": (
-                "최종 보고서가 준비된 단계다. 상세 페이지는 final_report.json을 그대로 쓴다."
+                "최종 보고서가 준비된 단계다. 상세 페이지는 final_report.json을 "
+                "그대로 쓴다."
             ),
         },
     }
@@ -659,11 +704,12 @@ def build_steps(
     }
 
     steps: list[dict[str, Any]] = []
-    for order, phase, label, filename, delay in STEPS:
-        plan = plans[phase]
+    for spec in steps_spec:
+        plan = plans[spec.phase]
         revealed: list[Finding] = plan["revealed"]
         guidance_status: str = plan["guidance"]
         report_ready = plan["report"] == REPORT_READY
+        narrative_revealed = plan["narrative"]
 
         steps.append(
             {
@@ -671,20 +717,20 @@ def build_steps(
                     "demo_only": True,
                     "demo_schema_version": DEMO_SCHEMA_VERSION,
                     "scenario_key": scenario_key,
-                    "step_index": order,
-                    "step_count": STEP_COUNT,
-                    "file": filename,
-                    "phase": phase,
-                    "phase_label": label,
-                    "recommended_delay_ms": delay,
-                    "is_last_step": order == STEP_COUNT - 1,
+                    "step_index": spec.order,
+                    "step_count": step_count,
+                    "file": spec.file,
+                    "phase": spec.phase,
+                    "phase_label": spec.phase_label,
+                    "recommended_delay_ms": spec.recommended_delay_ms,
+                    "is_last_step": spec.order == step_count - 1,
                     "step_note": plan["note"],
                     "presentation_metadata_note": PRESENTATION_NOTE,
                 },
                 "source": source_block,
                 "dashboard": {
                     "status": {
-                        "analysis_phase": phase,
+                        "analysis_phase": spec.phase,
                         "security_guidance": guidance_status,
                         "report": plan["report"],
                     },
@@ -710,9 +756,15 @@ def build_steps(
                     ),
                     "candidates": plan["candidates"],
                     "focused_incident": focused_detail if plan["focused"] else None,
-                    "security_guidance": build_guidance_block(report, guidance_status),
+                    "security_guidance": build_guidance_block(
+                        report,
+                        guidance_status,
+                        not_requested_reason=guidance_not_requested_reason,
+                    ),
                     "limitations": report["limitations"] if plan["candidates"] is not None else None,
-                    "narrative_summary": report["narrative_summary"] if report_ready else None,
+                    "narrative_summary": (
+                        report["narrative_summary"] if narrative_revealed else None
+                    ),
                     "final_report_file": FINAL_REPORT_FILE if report_ready else None,
                     "report_sections_available": (
                         sorted(key for key in report if key not in identity_keys)
@@ -737,10 +789,15 @@ def build_demo_pack(
     out_dir: Path,
     scenario_key: str = DEFAULT_SCENARIO_KEY,
     scenario_id: str = DEFAULT_SCENARIO_ID,
+    anchor_finding_id: str | None = None,
     anchor_finding_type: str | None = DEFAULT_ANCHOR_FINDING_TYPE,
     anchor_service: str | None = DEFAULT_ANCHOR_SERVICE,
     window_minutes: int = DEFAULT_WINDOW_MINUTES,
     lead_minutes: int = DEFAULT_LEAD_MINUTES,
+    title: str | None = None,
+    uses_rag: bool = True,
+    steps_spec: tuple[StepSpec, ...] | None = None,
+    guidance_not_requested_reason: str | None = None,
     verbose: bool = False,
 ) -> dict[str, Any]:
     """demo pack을 만들고 manifest dict를 돌려준다. 외부 API를 호출하지 않는다."""
@@ -755,14 +812,17 @@ def build_demo_pack(
     findings = list(load_findings(findings_path))
     log(f"[2/6] Finding 적재: {len(findings):,}건 ({findings_path})")
 
+    # anchor_finding_id가 있으면 그것만 쓴다. 없으면 type/service로 좁힌 뒤 가장 이른
+    # Finding을 고른다(기존 동작).
     candidates = [
         finding
         for finding in findings
-        if (anchor_finding_type is None or finding.finding_type == anchor_finding_type)
+        if (anchor_finding_id is None or finding.finding_id == anchor_finding_id)
+        and (anchor_finding_type is None or finding.finding_type == anchor_finding_type)
         and (anchor_service is None or finding.service == anchor_service)
     ]
     if not candidates:
-        raise ValueError("anchor 조건에 맞는 Finding이 없다")
+        raise ValueError(f"anchor 조건에 맞는 Finding이 없다 (id={anchor_finding_id!r})")
     anchor = min(candidates, key=lambda f: (f.start_time, f.finding_id))
     log(f"[3/6] anchor: {anchor.finding_id}")
 
@@ -796,6 +856,7 @@ def build_demo_pack(
     if set(focused_incident.finding_ids) != set(report["correlation"]["incident_finding_ids"]):
         raise ValueError("focused incident의 finding_ids가 최종 보고서와 다르다")
 
+    resolved_steps = steps_spec if steps_spec is not None else make_steps(uses_rag=uses_rag)
     steps = build_steps(
         report=report,
         projection=projection,
@@ -803,6 +864,9 @@ def build_demo_pack(
         selection=selection,
         anchor=anchor,
         scenario_key=scenario_key,
+        steps_spec=resolved_steps,
+        uses_rag=uses_rag,
+        guidance_not_requested_reason=guidance_not_requested_reason,
     )
     replay_events = build_replay_events(projection, window)
 
@@ -851,7 +915,8 @@ def build_demo_pack(
         "demo_schema_version": DEMO_SCHEMA_VERSION,
         "demo_only": True,
         "scenario_key": scenario_key,
-        "title": (
+        "title": title
+        or (
             f"{anchor.service} {anchor.finding_type} 조사"
             if anchor.service
             else f"{anchor.finding_type} 조사"
@@ -874,63 +939,74 @@ def build_demo_pack(
         "anchor_finding_id": anchor.finding_id,
         "replay_event_file": REPLAY_EVENT_FILE,
         "replay_event_count": len(replay_events),
-        "step_count": STEP_COUNT,
+        "step_count": len(resolved_steps),
+        "uses_rag": uses_rag,
         "presentation_metadata_note": PRESENTATION_NOTE,
         "steps": [
             {
-                "order": order,
-                "phase": phase,
-                "phase_label": label,
-                "file": filename,
-                "recommended_delay_ms": delay,
+                "order": spec.order,
+                "phase": spec.phase,
+                "phase_label": spec.phase_label,
+                "file": spec.file,
+                "recommended_delay_ms": spec.recommended_delay_ms,
             }
-            for order, phase, label, filename, delay in STEPS
+            for spec in resolved_steps
         ],
     }
     write_json(out_dir / MANIFEST_FILE, manifest)
     log(f"[5/6] 생성 완료: {out_dir}")
-    log(f"[6/6] replay event {len(replay_events)}건 / step {STEP_COUNT}개")
+    log(f"[6/6] replay event {len(replay_events)}건 / step {len(resolved_steps)}개")
     return manifest
+
+
+def build_scenario(scenario: DemoScenario, *, verbose: bool = False) -> dict[str, Any]:
+    """demo/scenarios.py의 설정 하나로 demo pack을 만든다."""
+    return build_demo_pack(
+        report_path=Path(scenario.report_path),
+        findings_path=Path(scenario.findings_path),
+        out_dir=Path(scenario.out_dir),
+        scenario_key=scenario.scenario_key,
+        scenario_id=scenario.scenario_id,
+        anchor_finding_id=scenario.anchor_finding_id,
+        anchor_finding_type=None,
+        anchor_service=None,
+        window_minutes=scenario.window_minutes,
+        lead_minutes=scenario.lead_minutes,
+        title=scenario.title,
+        uses_rag=scenario.uses_rag,
+        steps_spec=scenario.steps,
+        guidance_not_requested_reason=scenario.guidance_not_requested_reason,
+        verbose=verbose,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--report", default=DEFAULT_REPORT)
-    parser.add_argument("--findings", default=DEFAULT_FINDINGS)
-    parser.add_argument("--out", default=DEFAULT_OUT)
-    parser.add_argument("--scenario-key", default=DEFAULT_SCENARIO_KEY)
-    parser.add_argument("--scenario-id", default=DEFAULT_SCENARIO_ID)
-    parser.add_argument("--anchor-finding-type", default=DEFAULT_ANCHOR_FINDING_TYPE)
-    parser.add_argument("--anchor-service", default=DEFAULT_ANCHOR_SERVICE)
-    parser.add_argument("--window-minutes", type=int, default=DEFAULT_WINDOW_MINUTES)
-    parser.add_argument("--lead-minutes", type=int, default=DEFAULT_LEAD_MINUTES)
+    parser.add_argument(
+        "--scenario",
+        default=DEFAULT_SCENARIO_KEY,
+        help="demo/scenarios.py에 정의된 scenario_key",
+    )
+    parser.add_argument("--all", action="store_true", help="정의된 scenario를 모두 생성한다")
     args = parser.parse_args(argv)
 
-    report_path = Path(args.report)
-    findings_path = Path(args.findings)
-    if not report_path.is_file():
-        print(f"[중단] 보고서 파일이 없다: {report_path}")
-        return 1
-    if not findings_path.is_file():
-        print(f"[중단] Finding 파일이 없다: {findings_path}")
-        return 1
+    targets = list(SCENARIOS) if args.all else [get_scenario(args.scenario)]
 
-    out_dir = Path(args.out)
-    build_demo_pack(
-        report_path=report_path,
-        findings_path=findings_path,
-        out_dir=out_dir,
-        scenario_key=args.scenario_key,
-        scenario_id=args.scenario_id,
-        anchor_finding_type=args.anchor_finding_type,
-        anchor_service=args.anchor_service,
-        window_minutes=args.window_minutes,
-        lead_minutes=args.lead_minutes,
-        verbose=True,
-    )
+    for scenario in targets:
+        report_path = Path(scenario.report_path)
+        findings_path = Path(scenario.findings_path)
+        if not report_path.is_file():
+            print(f"[중단] 보고서 파일이 없다: {report_path}")
+            return 1
+        if not findings_path.is_file():
+            print(f"[중단] Finding 파일이 없다: {findings_path}")
+            return 1
 
-    for path in sorted(out_dir.iterdir()):
-        print(f"       {path.as_posix()}  ({path.stat().st_size:,} bytes)")
+        print(f"\n=== {scenario.scenario_key} ===")
+        build_scenario(scenario, verbose=True)
+        out_dir = Path(scenario.out_dir)
+        for path in sorted(out_dir.iterdir()):
+            print(f"       {path.as_posix()}  ({path.stat().st_size:,} bytes)")
     return 0
 
 

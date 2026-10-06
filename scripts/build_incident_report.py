@@ -49,6 +49,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--real", action="store_true", help="scenario 없이 real mode 보고서")
     parser.add_argument("--anchor-finding-type", default=None)
     parser.add_argument("--anchor-service", default=None)
+    # finding_type/service만으로는 후보가 여러 개일 때 가장 이른 Finding이 선택된다.
+    # 특정 Finding을 anchor로 쓰려면 ID를 그대로 지정한다.
+    parser.add_argument("--anchor-finding-id", default=None)
+    parser.add_argument("--scenario-id", default="report-window")
     parser.add_argument("--window-minutes", type=int, default=20)
     parser.add_argument("--lead-minutes", type=int, default=10)
     parser.add_argument("--out", default=None)
@@ -78,7 +82,8 @@ def main(argv: list[str] | None = None) -> int:
         candidates = [
             f
             for f in findings
-            if (args.anchor_finding_type is None or f.finding_type == args.anchor_finding_type)
+            if (args.anchor_finding_id is None or f.finding_id == args.anchor_finding_id)
+            and (args.anchor_finding_type is None or f.finding_type == args.anchor_finding_type)
             and (args.anchor_service is None or f.service == args.anchor_service)
         ]
         if not candidates:
@@ -89,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"       {anchor.finding_type} / {anchor.service} / {anchor.start_time}")
 
         scenario = make_analysis_scenario(
-            "report-window",
+            args.scenario_id,
             anchors={anchor.dataset: anchor.start_time},
             duration=timedelta(minutes=args.window_minutes),
             lead=timedelta(minutes=args.lead_minutes),
