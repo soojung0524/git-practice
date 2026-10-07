@@ -164,9 +164,6 @@ def timeline_items(result: dict, current_id: str | None = None, limit: int | Non
 
 # ───────────────────────── 화면: 홈 ─────────────────────────
 def page_home() -> None:
-    if svc.demo_mode_enabled():  # 설정에서 시연 모드를 켜면 홈이 시연 재생 화면이 된다
-        page_demo()
-        return
     html(ui.page_header("AWS 보안 사고 대응 대시보드", SUBTITLE, now_text()))
     result = ss.result
     if not result:
@@ -183,12 +180,19 @@ def page_home() -> None:
     top = svc.headline_finding(result)
     if top is None:
         cov = svc.analysis_coverage(result)
-        if cov["checked"] or not cov["skipped"]:
+        if cov["mismatch"]:
+            title = f"선택한 데이터셋({cov['mismatch']['selected']})의 이벤트가 이 파일에 없습니다"
+        elif cov["checked"] or not cov["skipped"]:
             title = "분석한 범위에서 탐지된 이상 징후가 없습니다"
         else:
-            title = "이 파일에는 현재 탐지기로 분석할 수 있는 로그가 없습니다"
+            title = "문제없습니다."
         n_ev = result.get("event_count")
-        desc = f"이벤트 {f'{n_ev:,}' if isinstance(n_ev, int) else '-'}건 중 탐지기가 검사한 로그: {svc.fmt_types(cov['checked'])}."
+        if cov["mismatch"]:
+            desc = (f"이 파일은 {', '.join(cov['mismatch']['in_file'])} 데이터입니다. 사고 분석 화면에서 데이터셋을 "
+                    "'파일에 맞춰 자동'으로 두고 다시 분석하세요. ")
+        else:
+            desc = ""
+        desc += f"이벤트 {f'{n_ev:,}' if isinstance(n_ev, int) else '-'}건 중 탐지기가 검사한 로그: {svc.fmt_types(cov['checked'])}."
         if cov["skipped"]:
             desc += f" 검사하지 못한 로그: {svc.fmt_types(cov['skipped'])} (분석 기능이 아직 없음)."
         desc += " 탐지 0건은 '정상'이라는 뜻이 아닙니다."
@@ -219,6 +223,9 @@ def page_home() -> None:
             if top is None:
                 cov = svc.analysis_coverage(result)
                 items = [f"검사한 로그: {svc.fmt_types(cov['checked'])}"]
+                if cov["mismatch"]:
+                    items.insert(0, f"선택한 데이터셋 {cov['mismatch']['selected']} ≠ 파일의 데이터셋 "
+                                    f"{', '.join(cov['mismatch']['in_file'])} → 모든 이벤트가 분석에서 빠짐")
                 if cov["skipped"]:
                     items.append(f"검사하지 못한 로그: {svc.fmt_types(cov['skipped'])}")
                 items += [f"{name}: {note or status}" for name, status, note in cov["limited"]]
@@ -282,7 +289,8 @@ def page_analyze() -> None:
                 event_path = st.text_input("이벤트 파일 경로", "output/events.pkl",
                                            help="output/ 아래에서 .pkl 파일을 찾지 못해 직접 입력합니다.")
             c1, c2 = st.columns(2)
-            dataset = c1.selectbox("데이터셋", ["gaia", "russellmitchell", "(지정 안 함)"])
+            dataset = c1.selectbox("데이터셋", ["(파일에 맞춰 자동)", "gaia", "russellmitchell"],
+                                   help="파일과 다른 데이터셋을 고르면 모든 이벤트가 분석에서 빠집니다.")
             inv_id = c2.text_input("사건 ID", placeholder="비우면 자동 생성")
             c3, c4 = st.columns(2)
             host = c3.text_input("호스트", placeholder="전체")
@@ -304,7 +312,7 @@ def page_analyze() -> None:
                     result = svc.run_analysis(
                         event_path=event_path,
                         investigation_id=inv_id or None,
-                        dataset=None if dataset == "(지정 안 함)" else dataset,
+                        dataset=None if dataset.startswith("(") else dataset,
                         host=host, service=service,
                         start_time=datetime.combine(start_d, start_t) if use_range and start_d else None,
                         end_time=datetime.combine(end_d, end_t) if use_range and end_d else None,
@@ -625,13 +633,14 @@ def page_settings() -> None:
             st.caption("저장할 분석 결과가 없습니다.")
         st.markdown("**시연 모드**")
         on = svc.demo_mode_enabled()
-        new = st.toggle("시연 모드 사용", value=on, key="demo_toggle")
+        new = st.toggle("대시보드(시연 모드) 메뉴 표시", value=on, key="demo_toggle")
         if new != on:
             svc.set_demo_mode(new)
             ss.pop("demo_loaded", None)  # 켤 때마다 1단계부터
+            ss.pop("demo_view", None)
             st.rerun()
         packs = svc.list_demo_packs()
-        st.caption("켜면 홈 화면이 시연 재생 화면으로 바뀝니다. 새로고침해도 유지됩니다. "
+        st.caption("켜면 사이드바에 '대시보드' 메뉴가 나타나 시연 자료를 단계별로 재생할 수 있습니다. 새로고침해도 유지됩니다. "
                    + (f"시연 자료 {len(packs)}개를 찾았습니다." if packs
                       else "시연 자료(output/demo)가 아직 없습니다."))
     with c2:
@@ -645,9 +654,9 @@ def page_settings() -> None:
             st.rerun()
 
 
-# ───────────────────────── 화면: 시연 모드 (설정에서 켜면 홈에 표시) ─────────────────────────
+# ───────────────────────── 화면: 대시보드 (시연 모드, 설정에서 메뉴 표시를 켜고 끔) ─────────────────────────
 DEMO_HELP = [
-    "팀 백엔드가 만든 시연 자료(output/demo/<시나리오>/manifest.json 과 step_00~06 파일)를 단계별로 재생합니다.",
+    "팀 백엔드가 만든 시연 자료(output/demo/<자료 이름>/manifest.json 과 step_00~06 파일)를 단계별로 재생합니다.",
     "시연 자료는 output/ 폴더에 만들어지고 git 에는 올라가지 않습니다. 자료를 만든 팀원에게 output/demo 폴더를 받아 "
     "프로젝트 루트의 output/demo 에 넣거나, 분석 결과가 있는 PC 에서 아래 명령으로 만드세요.",
 ]
@@ -668,18 +677,28 @@ def top_severity(counts: dict | None) -> str | None:
     return next((s for s in svc.SEVERITY_ORDER if (counts or {}).get(s)), None)
 
 
-def demo_timeline(entries: list[dict]) -> list[dict]:
-    """관측된 이상 징후와 분석 진행 표시(demo_workflow)를 구분해 그린다.
+def demo_timeline(dash: dict, detail: dict) -> list[dict]:
+    """단계가 진행될수록 쌓이는 타임라인.
 
-    진행 표시는 관측 이벤트가 아니므로(팀 산출물 주석) 시각을 붙이지 않고 흐리게 맨 뒤에 둔다.
+    팀 자료의 timeline_preview 는 조사 대상 선정(4단계)부터 조사 대상 사건의 탐지만 남기므로,
+    이미 공개된 같은 시간 범위의 탐지(projection_findings)를 함께 보여주고 조사 대상은 빨간 점으로 표시한다.
+    진행 표시(demo_workflow)는 관측 이벤트가 아니므로 시각 없이 흐리게 맨 뒤에 둔다.
     """
-    observed = [e for e in entries if e.get("timeline_type") != "demo_workflow"]
-    workflow = [e for e in entries if e.get("timeline_type") == "demo_workflow"]
-    items = [{"time": svc.fmt_time(e.get("original_start_time"), with_date=False),
+    preview = dash.get("timeline_preview") or []
+    observed = [e for e in preview if e.get("timeline_type") != "demo_workflow"]
+    workflow = [e for e in preview if e.get("timeline_type") == "demo_workflow"]
+    shown = {e.get("finding_id"): e for e in observed}
+    for f in detail.get("projection_findings") or []:
+        shown.setdefault(f.get("finding_id"), f)
+    focus_ids = set(((detail.get("focused_incident") or {}).get("finding_ids")) or [])
+    entries = sorted(shown.values(), key=lambda e: str(e.get("original_start_time") or e.get("start_time") or ""))
+    items = [{"time": svc.fmt_time(e.get("original_start_time") or e.get("start_time"), with_date=False),
               "title": e.get("summary") or e.get("finding_type") or "-",
               "sub": " · ".join(x for x in (e.get("host") or e.get("service"),
-                                            ui.RISK.get(e.get("severity"), ("",))[0]) if x)}
-             for e in observed]
+                                            ui.RISK.get(e.get("severity"), ("",))[0],
+                                            "조사 대상" if e.get("finding_id") in focus_ids else "") if x),
+              "current": e.get("finding_id") in focus_ids}
+             for e in entries]
     items += [{"time": "", "title": e.get("label") or "-", "sub": "분석 진행 표시 · 관측 이벤트 아님", "workflow": True}
               for e in workflow]
     return items
@@ -691,7 +710,7 @@ def demo_guidance_card(g: dict | None) -> tuple[str, list[dict]]:
     if status == "not_requested":
         return ui.card("보안상 주의사항", "book", ui.callout(
             "info", "보안 가이드를 요청하지 않음",
-            [g.get("not_requested_reason") or "이 시나리오는 보안 가이던스를 요청하지 않았습니다."])), []
+            [g.get("not_requested_reason") or "이 사건은 보안 가이던스를 요청하지 않았습니다."])), []
     if status == "analyzing":
         return ui.card("보안상 주의사항", "book",
                        '<p class="sx-muted">⏳ 조사 대상 사건으로 AWS 보안 대응 매뉴얼을 조회하고 있습니다.</p>'), []
@@ -714,17 +733,25 @@ def demo_guidance_card(g: dict | None) -> tuple[str, list[dict]]:
     return ui.card("보안상 주의사항", "book", body, ui.done_badge("조회 완료")), [{"page": n} for n in pages]
 
 
-def demo_name(key: str, pack: dict) -> str:
-    info = svc.DEMO_SCENARIOS.get(key)
-    if info:
-        return f"{info['no']}. {info['name']} ({key})"
-    return f"{pack.get('title') or key}" + ("  · 보안 가이던스 포함" if pack.get("uses_rag") else "")
+def md_card(key: str, title: str, ic: str, text: str, badge: str = "") -> None:
+    """마크다운 본문을 카드 모양으로. 제목은 다른 카드와 같은 HTML, 본문은 st.markdown 으로 그린다."""
+    with st.container(key=f"md_{key}"):
+        b = f'<span class="badge">{badge}</span>' if badge else ""
+        html(f'<div class="sx-ct"><span class="ic">{ui.icon(ic)}</span>{ui.E(title)}{b}</div>')
+        st.markdown(text)
 
 
 def page_demo() -> None:
-    html(ui.page_header("AWS 보안 사고 대응 대시보드",
-                        "시연 모드 · 저장된 분석 결과를 단계별로 재생합니다. 외부 API 는 호출하지 않습니다. (설정에서 끌 수 있음)",
-                        now_text()))
+    """대시보드: 팀 시연 자료를 단계별로 재생한다.
+
+    홈 → 사건 상세처럼 두 화면으로 나눈다.
+      요약 화면: 문제되는 곳 · 단계 · 숫자 요약 → 조사 대상 사건(크게) → 분석 영역별 탐지 | 타임라인
+      상세보기 : 단계 설명 → 요약 → 보안상 주의사항 → 후보 사건 → 참고 문서 → 해석 주의점
+                → 운영 상태 집계 → 보고서 받기 → 근거 로그 위치(맨 아래)
+    단계를 넘겨도 지금 보고 있는 화면(요약/상세)은 그대로 유지한다.
+    """
+    detail_view = ss.get("demo_view") == "detail"
+    html(ui.page_header("대시보드" if not detail_view else "대시보드 · 상세보기", "", now_text()))
 
     packs = svc.list_demo_packs()
     if not packs:
@@ -737,9 +764,8 @@ def page_demo() -> None:
     packs.sort(key=lambda p: (svc.DEMO_SCENARIOS.get(p["scenario_key"], {}).get("no", 99), p["scenario_key"]))
     by_key = {p["scenario_key"]: p for p in packs}
     top1, top2 = st.columns([3, 2], gap="medium")
-    key = top1.selectbox("시나리오", list(by_key), key="demo_key",
-                         format_func=lambda k: demo_name(k, by_key[k])
-                                               + ("  · 보안 가이던스 포함" if by_key[k].get("uses_rag") else ""))
+    key = top1.selectbox("재생할 자료", list(by_key), key="demo_key", label_visibility="collapsed",
+                         format_func=lambda k: k)
     pack = by_key[key]
     steps = pack["steps"]
     last = len(steps) - 1
@@ -750,7 +776,6 @@ def page_demo() -> None:
         ss.demo_play = False
 
     with top2:
-        st.markdown('<div style="height:28px"></div>', unsafe_allow_html=True)
         b1, b2, b3, b4 = st.columns(4)
         if b1.button("처음", use_container_width=True, disabled=i == 0):
             ss.demo_step, ss.demo_play = 0, False
@@ -766,138 +791,34 @@ def page_demo() -> None:
             ss.demo_play = not playing
             st.rerun()
 
-    info = svc.DEMO_SCENARIOS.get(key)
-    if info:
-        html(ui.card(f"시나리오 {info['no']}. {info['name']}", "list",
-                     ui.chips([("문제되는 곳", info["area"]), ("데이터", pack.get("title") or key)])
-                     + ui.callout("info", "시연에서 보여주는 핵심", [info["point"]]),
-                     ui.tag("보안 가이던스 포함" if pack.get("uses_rag") else "보안 가이던스 요청 안 함",
-                            blue=bool(pack.get("uses_rag")))))
-        with st.expander("시나리오 상세"):
-            html(ui.bullets(info["details"]))
-    html(ui.stepper([s["phase_label"] for s in steps], i))
     data = demo_file(pack["_dir"], steps[i]["file"])
     demo, dash, detail = data.get("demo") or {}, data.get("dashboard") or {}, data.get("detail") or {}
     counters, status = dash.get("counters") or {}, dash.get("status") or {}
 
-    if demo.get("step_note"):
-        html(ui.callout("info", f"STEP {i + 1}. {demo.get('phase_label', '')}", [demo["step_note"]]))
+    # ── 공통 머리: 문제되는 곳 · 단계 ──
+    info = svc.DEMO_SCENARIOS.get(key)
+    guide_tag = ui.tag("보안 가이던스 포함" if pack.get("uses_rag") else "보안 가이던스 요청 안 함",
+                       blue=bool(pack.get("uses_rag")))
+    if info:
+        html(ui.scenario_strip(f"{info['no']}. {info['name']}", info["area"], "",
+                               pack.get("title") or key, guide_tag))
+        with st.expander("문제 상황 요약"):
+            html(ui.bullets(info["details"]))
+    else:
+        html(ui.scenario_strip(pack.get("title") or key, "-", "", key, guide_tag))
+    html(ui.stepper([s["phase_label"] for s in steps], i))
+    html(ui.risk_summary(dash.get("revealed_severity_counts")))
 
-    html(ui.kpis([
-        ("공개된 이상 징후", counters.get("revealed_findings_count")),
-        ("후보 사건", counters.get("candidate_incident_count")),
-        ("조사 대상 사건", counters.get("focused_incident_count")),
-        ("제외된 후보", counters.get("unselected_candidate_incident_count")),
-        ("보안 가이던스", svc.GUIDANCE_STATUS_KO.get(status.get("security_guidance"), status.get("security_guidance"))),
-        ("보고서", svc.REPORT_STATUS_KO.get(status.get("report"), status.get("report"))),
-    ]))
-
-    left, right = st.columns([2, 1.05], gap="medium")
-    focused = detail.get("focused_incident")
-    cand = detail.get("candidates")
-    with left:
-        # ── 분석 영역별로 공개된 이상 징후 ──
-        rows = []
-        for a in dash.get("agents") or []:
-            rev = a.get("demo_revealed") or {}
-            name = svc.AGENT_KO.get(a.get("agent_name"), a.get("agent_name"))
-            n = rev.get("findings_count") or 0
-            rows.append(f"{name}: 이상 징후 {n}건 ({sev_text(rev.get('severity_counts'))})" if n
-                        else f"{name}: 공개된 이상 징후 없음")
-        body = ui.bullets(rows)
-        if dash.get("revealed_severity_counts"):
-            body += ui.sub("위험 단계별") + ui.chips(
-                [(ui.RISK[s][0], f"{c}건") for s, c in dash["revealed_severity_counts"].items() if s in ui.RISK])
-        body += '<p class="sx-muted" style="margin-top:6px">관측된 이상 징후만 집계합니다 · 정상/장애 판정 없음</p>'
-        html(ui.card("분석 영역별 탐지", "server", body))
-
-        # ── 후보 사건 ──
-        if cand and cand.get("candidate_incidents"):
-            chosen = set(cand.get("focused_incident_ids") or [])
-            done = bool(cand.get("selection_completed"))
-            body = ""
-            for k, inc in enumerate(cand["candidate_incidents"], 1):
-                is_focus = inc["incident_id"] in chosen
-                where = ", ".join((inc.get("affected_services") or []) + (inc.get("affected_hosts") or [])) or "-"
-                tags = [ui.risk_pill(top_severity(inc.get("severity_counts")))]
-                if is_focus:
-                    tags.append(ui.tag("조사 대상", blue=True))
-                if inc.get("is_single_finding"):
-                    tags.append(ui.tag("단일 탐지"))
-                basis = ", ".join(svc.GROUPING_KO.get(b, b) for b in inc.get("grouping_basis") or []) or "-"
-                body += ui.incident_row(
-                    f"후보 {k} · {where}",
-                    [f"이상 징후 {inc.get('finding_count', 0)}건 ({sev_text(inc.get('severity_counts'))}) · "
-                     + ", ".join(inc.get("finding_type_counts") or {}),
-                     f"묶은 근거: {basis}"],
-                    tags, "focus" if is_focus else ("dim" if done else ""))
-            if done and cand.get("unselected_note"):
-                body += f'<p class="sx-muted">{ui.E(cand["unselected_note"])}</p>'
-            elif not done:
-                body += '<p class="sx-muted">같은 시간 범위 안의 이상 징후를 관계별로 묶은 후보입니다. 조사 대상은 아직 고르지 않았습니다.</p>'
-            html(ui.card("후보 사건", "list", body))
-
-        # ── 조사 대상 사건 ──
-        if focused:
-            imp = focused.get("impact") or {}
-            chip_items = [("호스트", ", ".join(imp.get("affected_hosts") or []) or "-"),
-                          ("서비스", ", ".join(imp.get("affected_services") or []) or "-")]
-            if imp.get("affected_ips"):
-                chip_items.append(("IP", ", ".join(imp["affected_ips"][:5])))
-            if imp.get("affected_users"):
-                chip_items.append(("계정", ", ".join(imp["affected_users"][:5])))
-            chip_items.append(("위험 단계", sev_text(imp.get("severity_counts"))))
-            body = ui.chips(chip_items)
-            items = ((focused.get("findings") or {}).get("items") or {}).get("items") or []
-            body += ui.sub("포함된 이상 징후", "alert") + ui.bullets(
-                [f"[{ui.RISK.get(f.get('severity'), ('-',))[0]}] {f.get('summary')} "
-                 f"({svc.fmt_time(f.get('start_time'), with_date=False)}~{svc.fmt_time(f.get('end_time'), with_date=False)})"
-                 for f in items])
-            basis = (focused.get("correlation_basis") or {}).get("grouping_basis") or []
-            if basis:
-                body += ui.sub("하나의 사건으로 묶은 근거", "check") + ui.bullets(
-                    [svc.GROUPING_KO.get(b, b) for b in basis])
-            hyps = focused.get("hypotheses") or []
-            body += ui.sub("가설 후보", "search")
-            body += ui.bullets([h.get("statement", "") for h in hyps]) if hyps else \
-                f'<p class="sx-muted">{ui.E(focused.get("hypotheses_note") or "가설 후보가 없습니다.")}</p>'
-            html(ui.card("조사 대상 사건", "shield", body))
-
-            groups = (focused.get("evidence") or {}).get("groups") or []
-            if groups:
-                with st.expander(f"근거 로그 위치 ({(focused.get('evidence') or {}).get('included_evidence_count', '')}건)"):
-                    for g in groups:
-                        st.caption(g.get("finding_id"))
-                        st.code("\n".join(f"{it.get('source_file')} : {it.get('line_number')}줄  "
-                                          f"{svc.fmt_time(it.get('timestamp'))}" for it in g.get("items") or []),
-                                language=None)
-
-        guide_html, pages = demo_guidance_card(detail.get("security_guidance"))
-        html(guide_html)
-        q = (detail.get("security_guidance") or {}).get("question")
-        if q:
-            with st.expander("매뉴얼에 보낸 질문 보기"):
-                st.text(q)
-
-        ns = (detail.get("narrative_summary") or {}).get("text")
-        if ns:
-            html(ui.card("요약", "file", ui.paragraphs([ns])))
-
-    with right:
-        html(ui.timeline(demo_timeline(dash.get("timeline_preview") or []), title="타임라인"))
-        html(ui.refs(pages))
-        op = dash.get("operational_state")
-        if op:
-            html(ui.card("운영 상태 집계", "server", ui.paragraphs([
-                "정상 · 경고 · 장애 수는 집계하지 않습니다.", op.get("policy") or ""])))
-        notes = (detail.get("limitations") or {}).get("notes") or []
-        if notes and demo.get("is_last_step"):
-            html(ui.card("해석할 때 주의할 점", "alert", ui.bullets(notes)))
-        if demo.get("is_last_step"):
-            report = Path(pack["_dir"]) / (detail.get("final_report_file") or "final_report.json")
-            if report.exists():
-                st.download_button("최종 보고서 JSON 받기", report.read_bytes(), file_name=f"{key}_report.json",
-                                   mime="application/json", use_container_width=True)
+    if detail_view:
+        if st.button("← 대시보드로 돌아가기", type="tertiary"):
+            ss.demo_view = None
+            st.rerun()
+        demo_detail(pack, key, demo, dash, detail)
+    else:
+        demo_summary(dash, detail, counters, status)
+        if st.button("상세보기 →", type="primary", key="demo_detail_btn"):
+            ss.demo_view = "detail"
+            st.rerun()
 
     # 자동 재생: 화면을 다 그린 뒤 권장 시간만큼 기다렸다가 다음 단계로
     if ss.get("demo_play"):
@@ -909,19 +830,150 @@ def page_demo() -> None:
             st.rerun()
 
 
+def demo_summary(dash: dict, detail: dict, counters: dict, status: dict) -> None:
+    """요약 화면: 분석 영역별 탐지 → 조사 대상 사건(크게) → 분석 현황 | 타임라인."""
+    tiles = []
+    for a in dash.get("agents") or []:
+        rev = a.get("demo_revealed") or {}
+        name = svc.AGENT_KO.get(a.get("agent_name"), a.get("agent_name"))
+        n = rev.get("findings_count") or 0
+        sc = rev.get("severity_counts")
+        tiles.append((name, f"이상 징후 {n}건" if n else "이상 징후 없음", sev_text(sc) if n else "",
+                      top_severity(sc) if n else None))
+    html(ui.area_tiles(tiles))
+
+    focused = detail.get("focused_incident")
+    if focused:
+        imp = focused.get("impact") or {}
+        chip_items = [("호스트", ", ".join(imp.get("affected_hosts") or []) or "-"),
+                      ("서비스", ", ".join(imp.get("affected_services") or []) or "-")]
+        if imp.get("affected_ips"):
+            chip_items.append(("IP", ", ".join(imp["affected_ips"][:5])))
+        if imp.get("affected_users"):
+            chip_items.append(("계정", ", ".join(imp["affected_users"][:5])))
+        chip_items.append(("이상 징후", f"{focused.get('finding_count', 0)}건 ({sev_text(imp.get('severity_counts'))})"))
+        items = ((focused.get("findings") or {}).get("items") or {}).get("items") or []
+        left = ui.chips(chip_items) + ui.sub("포함된 이상 징후", "alert") + ui.bullets(
+            [f"[{ui.RISK.get(f.get('severity'), ('-',))[0]}] {f.get('summary')} "
+             f"({svc.fmt_time(f.get('start_time'), with_date=False)}~{svc.fmt_time(f.get('end_time'), with_date=False)})"
+             for f in items])
+        right = ""
+        basis = (focused.get("correlation_basis") or {}).get("grouping_basis") or []
+        if basis:
+            right += ui.sub("하나의 사건으로 묶은 근거", "check") + ui.bullets([svc.GROUPING_KO.get(b, b) for b in basis])
+        hyps = focused.get("hypotheses") or []
+        right += ui.sub("가설 후보", "search")
+        right += ui.bullets([h.get("statement", "") for h in hyps]) if hyps else \
+            f'<p class="sx-muted">{ui.E(focused.get("hypotheses_note") or "가설 후보가 없습니다.")}</p>'
+        html(ui.focus_card(top_severity(imp.get("severity_counts")), left, right))
+    else:
+        n = counters.get("candidate_incident_count")
+        msg = (f"후보 사건 {n}건 중 조사 대상을 고르는 중입니다." if n
+               else "이상 징후를 상관분석으로 묶은 뒤 조사 대상 사건을 선정합니다.")
+        html(ui.focus_card(None, f'<p class="sx-muted">{ui.E(msg)}</p>', "", empty=True))
+
+    c_area, c_tl = st.columns([1, 1.2], gap="medium")
+    with c_area:
+        def val(v: object) -> str:
+            return "-" if v is None else str(v)
+        rows = [
+            f"공개된 이상 징후: {val(counters.get('revealed_findings_count'))}",
+            f"후보 사건: {val(counters.get('candidate_incident_count'))}",
+            f"조사 대상 사건: {val(counters.get('focused_incident_count'))}",
+            f"제외된 후보: {val(counters.get('unselected_candidate_incident_count'))}",
+            f"보안 가이던스: {val(svc.GUIDANCE_STATUS_KO.get(status.get('security_guidance'), status.get('security_guidance')))}",
+            f"보고서: {val(svc.REPORT_STATUS_KO.get(status.get('report'), status.get('report')))}",
+        ]
+        body = ui.bullets(rows)
+        body += '<p class="sx-muted" style="margin-top:6px">관측된 이상 징후만 집계합니다 · 정상/장애 판정 없음</p>'
+        html(ui.card("분석 현황", "list", body))
+    with c_tl:
+        html(ui.timeline(demo_timeline(dash, detail), title="타임라인"))
+
+
+def demo_detail(pack: dict, key: str, demo: dict, dash: dict, detail: dict) -> None:
+    """상세보기: 줄글 → 근거·맥락 → 근거 로그 위치(맨 아래)."""
+    if demo.get("step_note"):
+        html(ui.callout("info", f"이 단계에서 보여주는 것 · {demo.get('phase_label', '')}", [demo["step_note"]]))
+
+    ns = (detail.get("narrative_summary") or {}).get("text")
+    if ns:
+        md_card("summary", "요약", "file", ns)
+
+    guide_html, pages = demo_guidance_card(detail.get("security_guidance"))
+    html(guide_html)
+    q = (detail.get("security_guidance") or {}).get("question")
+    if q:
+        with st.expander("매뉴얼에 보낸 질문 보기"):
+            st.markdown(q)
+
+    cand = detail.get("candidates")
+    if cand and cand.get("candidate_incidents"):
+        chosen = set(cand.get("focused_incident_ids") or [])
+        done = bool(cand.get("selection_completed"))
+        body = ""
+        for k, inc in enumerate(cand["candidate_incidents"], 1):
+            is_focus = inc["incident_id"] in chosen
+            where = ", ".join((inc.get("affected_services") or []) + (inc.get("affected_hosts") or [])) or "-"
+            tags = [ui.risk_pill(top_severity(inc.get("severity_counts")))]
+            if is_focus:
+                tags.append(ui.tag("조사 대상", blue=True))
+            if inc.get("is_single_finding"):
+                tags.append(ui.tag("단일 탐지"))
+            basis = ", ".join(svc.GROUPING_KO.get(b, b) for b in inc.get("grouping_basis") or []) or "-"
+            body += ui.incident_row(
+                f"후보 {k} · {where}",
+                [f"이상 징후 {inc.get('finding_count', 0)}건 ({sev_text(inc.get('severity_counts'))}) · "
+                 + ", ".join(inc.get("finding_type_counts") or {}),
+                 f"묶은 근거: {basis}"],
+                tags, "focus" if is_focus else ("dim" if done else ""))
+        if done and cand.get("unselected_note"):
+            body += f'<p class="sx-muted">{ui.E(cand["unselected_note"])}</p>'
+        elif not done:
+            body += '<p class="sx-muted">같은 시간 범위 안의 이상 징후를 관계별로 묶은 후보입니다. 조사 대상은 아직 고르지 않았습니다.</p>'
+        html(ui.card("후보 사건", "list", body))
+
+    html(ui.refs(pages))
+    notes = (detail.get("limitations") or {}).get("notes") or []
+    if notes and demo.get("is_last_step"):
+        html(ui.card("해석할 때 주의할 점", "alert", ui.bullets(notes)))
+    op = dash.get("operational_state")
+    if op:
+        html(ui.card("운영 상태 집계", "server", ui.paragraphs([
+            "정상 · 경고 · 장애 수는 집계하지 않습니다.", op.get("policy") or ""])))
+    if demo.get("is_last_step"):
+        report = Path(pack["_dir"]) / (detail.get("final_report_file") or "final_report.json")
+        if report.exists():
+            st.download_button("최종 보고서 JSON 받기", report.read_bytes(), file_name=f"{key}_report.json",
+                               mime="application/json")
+
+    focused = detail.get("focused_incident") or {}
+    groups = (focused.get("evidence") or {}).get("groups") or []
+    if groups:
+        with st.expander(f"근거 로그 위치 ({(focused.get('evidence') or {}).get('included_evidence_count', '')}건)"):
+            for g in groups:
+                st.caption(g.get("finding_id"))
+                st.code("\n".join(f"{it.get('source_file')} : {it.get('line_number')}줄  "
+                                  f"{svc.fmt_time(it.get('timestamp'))}" for it in g.get("items") or []),
+                        language=None)
+
+
 # ───────────────────────── 내비게이션 ─────────────────────────
 PAGES = {
     "home": st.Page(page_home, title="홈", icon=":material/home:", url_path="home", default=True),
+    "dashboard": st.Page(page_demo, title="대시보드", icon=":material/dashboard:", url_path="dashboard"),
     "analyze": st.Page(page_analyze, title="사고 분석", icon=":material/search:", url_path="analyze"),
     "records": st.Page(page_records, title="분석 기록", icon=":material/description:", url_path="records"),
     "docs": st.Page(page_docs, title="보안 매뉴얼", icon=":material/menu_book:", url_path="docs"),
     "settings": st.Page(page_settings, title="설정", icon=":material/settings:", url_path="settings"),
 }
-current = st.navigation(list(PAGES.values()), position="hidden")
+# 대시보드(시연 모드) 메뉴는 설정에서 숨길 수 있다
+VISIBLE = [p for k, p in PAGES.items() if k != "dashboard" or svc.demo_mode_enabled()]
+current = st.navigation(VISIBLE, position="hidden")
 
 with st.sidebar:
     html(ui.brand())
-    for page in PAGES.values():
+    for page in VISIBLE:
         if page.title == current.title:
             with st.container(key="navactive"):
                 st.page_link(page)
@@ -929,7 +981,5 @@ with st.sidebar:
             st.page_link(page)
     ok, msg = cached_status()
     html(ui.system_status(ok, msg, now_text()))
-    if svc.demo_mode_enabled():
-        html(ui.demo_badge())
 
 current.run()

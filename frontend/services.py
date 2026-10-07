@@ -167,11 +167,18 @@ def run_analysis(
     # 첫 순회(라우팅 단계)에서만 호스트 목록과 이벤트 수를 기록한다. 분석 범위 표시에 쓴다.
     hosts: set[str] = set()
     types: dict[str, int] = {}
+    datasets: dict[str, int] = {}
     counter = {"events": 0, "recorded": False}
 
     def _recording(events):
         for e in events:
             counter["events"] += 1
+            ds = e.get("dataset") if isinstance(e, dict) else getattr(e, "dataset", None)
+            if ds:
+                datasets[str(ds)] = datasets.get(str(ds), 0) + 1
+            if dataset and ds and ds != dataset:
+                yield e  # 다른 데이터셋 이벤트는 분석 범위 집계에서 뺀다(백엔드도 건너뜀)
+                continue
             h = e.get("host") if isinstance(e, dict) else getattr(e, "host", None)
             if h:
                 hosts.add(str(h))
@@ -226,6 +233,8 @@ def run_analysis(
     result["hosts"] = sorted(hosts)
     result["event_count"] = counter["events"]
     result["source_type_counts"] = dict(sorted(types.items(), key=lambda kv: -kv[1]))
+    result["dataset_counts"] = datasets
+    result["scope_dataset"] = dataset or None
     return result
 
 
@@ -651,7 +660,7 @@ def load_settings() -> dict[str, Any]:
 
 
 def demo_mode_enabled() -> bool:
-    return bool(load_settings().get("demo_mode"))
+    return bool(load_settings().get("demo_mode", True))  # 설정 파일이 없으면 메뉴를 보여준다
 
 
 def set_demo_mode(on: bool) -> None:
@@ -701,7 +710,12 @@ def analysis_coverage(result: dict[str, Any]) -> dict[str, Any]:
         if "not_implemented" in status or "partial" in status:
             notes = (agent.get("extra") or {}).get("notes") or []
             limited.append((AREA_LABELS.get(area, area), status, notes[0] if notes else ""))
-    return {"checked": checked, "skipped": skipped, "limited": limited}
+    # 지정한 데이터셋이 파일에 없으면 백엔드가 이벤트를 전부 건너뛴다(탐지 0건의 흔한 원인)
+    mismatch = None
+    want, have = result.get("scope_dataset"), result.get("dataset_counts") or {}
+    if want and have and want not in have:
+        mismatch = {"selected": want, "in_file": list(have)}
+    return {"checked": checked, "skipped": skipped, "limited": limited, "mismatch": mismatch}
 
 
 def fmt_types(types: dict[str, Any]) -> str:

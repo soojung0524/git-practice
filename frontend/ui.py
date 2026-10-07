@@ -142,6 +142,10 @@ section[data-testid="stSidebar"] .st-key-navactive a *{color:#fff !important;fon
 .sx-kpi .v{font-size:1.5rem;font-weight:800;color:#0f172a;margin-top:2px;line-height:1.2}
 .sx-kpi .v.muted{color:#cbd5e1}
 .sx-kpi .v.txt{font-size:1.05rem;padding-top:4px}
+.sx-kpi .nt{font-size:.76rem;margin-top:4px;color:#64748b}
+.sx-kpi.sev{box-shadow:0 2px 8px rgba(15,23,42,.12)}
+.sx-kpi.sev .k,.sx-kpi.sev .v,.sx-kpi.sev .nt{color:inherit}
+.sx-kpi.sev .k{font-weight:700;opacity:.92}
 .sx-inc{border:1px solid #e5e9f2;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
 .sx-inc.focus{border:2px solid #2563eb;background:#f8fbff}
 .sx-inc.dim{opacity:.6}
@@ -151,6 +155,45 @@ section[data-testid="stSidebar"] .st-key-navactive a *{color:#fff !important;fon
 .sx-tag.blue{background:#2563eb;color:#fff}
 .sx-tl .it.wf .dt{background:#cbd5e1;box-shadow:0 0 0 3px #f1f5f9}
 .sx-tl .it.wf .tt{color:#64748b;font-weight:500;font-style:italic}
+.sx-scn{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:12px 16px;margin-bottom:8px}
+.sx-scn .nm{font-weight:800;font-size:1rem;color:#0f172a}
+.sx-scn .area{display:inline-flex;gap:6px;align-items:center;background:#fef2f2;color:#b91c1c;border-radius:8px;padding:4px 10px;font-size:.82rem;font-weight:700}
+.sx-scn .area span{font-weight:500;color:#7f1d1d}
+.sx-scn .pt{flex-basis:100%;font-size:.82rem;color:#475569}
+.sx-scn .pt b{color:#1d4ed8;margin-right:6px}
+.sx-scn .ds{font-size:.76rem;color:#64748b;margin-left:auto}
+[class*="st-key-md_"]{background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:16px 18px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+[class*="st-key-md_"] p,[class*="st-key-md_"] li{font-size:.86rem;line-height:1.7;color:#334155}
+[class*="st-key-md_"] h1,[class*="st-key-md_"] h2,[class*="st-key-md_"] h3,[class*="st-key-md_"] h4{font-size:.95rem;font-weight:700;color:#0f172a;margin:.8rem 0 .3rem;padding:0}
+.sx-focus{background:#fff;border:1px solid #e5e9f2;border-left:5px solid #dc2626;border-radius:12px;padding:18px 20px;margin:4px 0 12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.sx-focus.empty{border-left-color:#cbd5e1}
+.sx-focus .hd{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.15rem;color:#0f172a;margin-bottom:12px}
+.sx-focus .hd .ic{color:#dc2626;display:flex}
+.sx-focus.empty .hd .ic{color:#94a3b8}
+.sx-focus .bd{display:flex;gap:24px;align-items:flex-start}
+.sx-focus .bd .l{flex:1.4;min-width:0}.sx-focus .bd .r{flex:1;min-width:0}
+.sx-focus ul.sx-ul{margin:0;padding-left:1.1rem}.sx-focus ul.sx-ul li{color:#334155;font-size:.88rem;line-height:1.7}
+.sx-focus .sx-rbig{flex:none}
+.sx-rs{background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:14px 18px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.sx-rs .hd{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem;color:#0f172a;margin-bottom:12px}
+.sx-rs .hd .ic{color:#2563eb;display:flex}
+.sx-rs .hd .tot{margin-left:auto;font-size:.8rem;font-weight:600;color:#64748b}
+.sx-rs .hd .tot b{font-size:1.05rem;color:#0f172a;margin:0 2px 0 4px}
+.sx-rs .cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.sx-rs .c{position:relative;border-radius:10px;padding:10px 14px 10px 16px;background:var(--b);overflow:hidden}
+.sx-rs .c::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--a)}
+.sx-rs .c .lb{display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:700;color:#334155}
+.sx-rs .c .lb small{font-size:.7rem;font-weight:600;color:#94a3b8}
+.sx-rs .c .n{font-size:1.75rem;font-weight:800;line-height:1.15;margin-top:4px;color:var(--t)}
+.sx-rs .c .n small{font-size:.82rem;font-weight:700;margin-left:3px;color:#64748b}
+.sx-rs .c.zero{background:#fbfcfe}
+.sx-rs .c.zero::before{background:#e2e8f0}
+.sx-rs .c.zero .lb{color:#94a3b8}
+.sx-rs .c.zero .n{color:#cbd5e1}
+.sx-rs .bar{display:flex;height:8px;border-radius:999px;overflow:hidden;background:#f1f5f9;margin-top:14px;gap:2px}
+.sx-rs .bar i{display:block;height:100%}
+.sx-rs .empty{color:#94a3b8;font-size:.82rem}
+@media (max-width:700px){.sx-rs .cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>""")
 
 
@@ -173,6 +216,32 @@ def risk_box(severity: str | None) -> str:
     return _h(f'<div class="sx-rbig" style="{style}"><div class="k">위험 단계</div>'
               f'<div class="lv">{level or "-"}<small>/{RISK_LEVELS}</small></div><div class="lb">{E(label)}</div>'
               f'<div class="gauge">{gauge}</div></div>')
+
+
+# 위험 단계별 카드의 숫자 색. 주의(노랑)·낮음(밝은 회색) 배경색은 흰 바탕 글자로 쓰면 안 보여서 진하게.
+_RISK_TEXT = {"critical": "#dc2626", "high": "#ea580c", "medium": "#d97706", "low": "#64748b"}
+_RISK_BAR = {"critical": "#dc2626", "high": "#ea580c", "medium": "#fbbf24", "low": "#94a3b8"}
+_RISK_TINT = {"critical": "#fef2f2", "high": "#fff7ed", "medium": "#fffbeb", "low": "#f1f5f9"}
+
+
+def risk_summary(counts: dict[str, int] | None) -> str:
+    """위험 단계별 이상 징후 카드: 4단계를 항상 같은 자리에(0건은 흐리게) + 비율 막대."""
+    counts = {s: n for s, n in (counts or {}).items() if s in _RISK_TEXT and n}
+    total = sum(counts.values())
+    order = sorted(_RISK_TEXT, key=lambda s: -RISK[s][1])
+    cells = []
+    for sev in order:
+        label, level, _, _ = RISK[sev]
+        n = counts.get(sev, 0)
+        cells.append(f'<div class="c{"" if n else " zero"}" style="--a:{_RISK_BAR[sev]};--t:{_RISK_TEXT[sev]};--b:{_RISK_TINT[sev]}">'
+                     f'<div class="lb">{E(label)}<small>{level}단계</small></div>'
+                     f'<div class="n">{n}<small>건</small></div></div>')
+    bar = "".join(f'<i style="flex:{counts[s]};background:{_RISK_BAR[s]}"></i>' for s in order if counts.get(s))
+    tot = f'<span class="tot">총<b>{total}</b>건</span>' if total else ""
+    foot = (f'<div class="bar">{bar}</div>' if total
+            else '<div class="empty" style="margin-top:10px">아직 공개된 이상 징후가 없습니다.</div>')
+    return _h(f'<div class="sx-rs"><div class="hd"><span class="ic">{icon("alert")}</span>위험 단계별 이상 징후{tot}</div>'
+              f'<div class="cells">{"".join(cells)}</div>{foot}</div>')
 
 
 def done_badge(text: str) -> str:
@@ -213,7 +282,7 @@ def system_status(ok: bool, message: str, when: str) -> str:
 # ───────────────────────── 홈 ─────────────────────────
 def page_header(title: str, subtitle: str, right: str = "") -> str:
     return _h(f'<div class="sx-head"><div class="l">{icon("shield", 46, BLUE)}<div><div class="h1">{E(title)}</div>'
-              f'<p>{E(subtitle)}</p></div></div><div class="r">{E(right)}</div></div>')
+              f'{f"<p>{E(subtitle)}</p>" if subtitle else ""}</div></div><div class="r">{E(right)}</div></div>')
 
 
 def banner(*, category: str, title: str, desc: str, occurred: str, updated: str, severity: str | None) -> str:
@@ -313,6 +382,24 @@ def kpis(items: list[tuple[str, object]]) -> str:
     return f'<div class="sx-kpis">{"".join(cells)}</div>'
 
 
+def area_tiles(items: list[tuple[str, str, str, str | None]]) -> str:
+    """분석 영역별 탐지 타일. items = [(영역 이름, 값, 아래 설명, 가장 높은 위험 단계)].
+    위험 단계가 있으면 그 단계 색으로 칠하고, 없으면 흰 타일에 흐린 글자."""
+    cells = []
+    for label, value, note, sev in items:
+        if sev in RISK:
+            _, _, fg, bg = RISK[sev]
+            style, cls = f' style="background:{bg};border-color:{bg};color:{fg}"', "sx-kpi sev"
+        else:
+            style, cls = "", "sx-kpi"
+        n = f'<div class="nt">{E(note)}</div>' if note else ""
+        cells.append(f'<div class="{cls}"{style}><div class="k">{E(label)}</div>'
+                     f'<div class="v{"" if sev else " muted"}" style="font-size:1.2rem">{E(value)}</div>{n}</div>')
+    if not cells:
+        return ""
+    return f'<div class="sx-kpis">{"".join(cells)}</div>'
+
+
 def tag(text: str, blue: bool = False) -> str:
     return f'<span class="sx-tag{" blue" if blue else ""}">{E(text)}</span>'
 
@@ -328,3 +415,19 @@ def demo_badge() -> str:
     return _h('<div class="sx-sys" style="margin-top:10px;border-top:none;padding-top:0">'
               '<span class="sx-dot" style="background:#60a5fa"></span><div><div>시연 모드 켜짐</div>'
               '<div style="opacity:.6;font-size:.72rem">설정에서 끌 수 있습니다</div></div></div>')
+
+
+def scenario_strip(name: str, area: str, point: str, data_title: str, tag_html: str) -> str:
+    """대시보드 맨 위 한 줄: 시나리오 이름 · 문제되는 곳 · 데이터 · 시연 핵심."""
+    pt = f'<div class="pt"><b>핵심</b>{E(point)}</div>' if point else ""
+    return _h(f'<div class="sx-scn"><span class="nm">{E(name)}</span>'
+              f'<span class="area">문제되는 곳 <span>{E(area)}</span></span>{tag_html}'
+              f'<span class="ds">데이터: {E(data_title)}</span>{pt}</div>')
+
+
+def focus_card(severity: str | None, left: str, right: str, empty: bool = False) -> str:
+    """대시보드의 '조사 대상 사건'을 크게: 왼쪽 영향 범위·포함 탐지, 가운데 묶은 근거·가설, 오른쪽 위험 단계."""
+    risk = "" if empty else risk_box(severity)
+    mid = f'<div class="r">{right}</div>' if right else ""
+    return _h(f'<div class="sx-focus{" empty" if empty else ""}"><div class="hd"><span class="ic">{icon("shield", 22)}</span>'
+              f'조사 대상 사건</div><div class="bd"><div class="l">{left}</div>{mid}{risk}</div></div>')
