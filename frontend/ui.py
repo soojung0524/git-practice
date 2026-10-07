@@ -62,7 +62,7 @@ section[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover{backg
 section[data-testid="stSidebar"] .st-key-navactive a{background:#2563eb !important}
 section[data-testid="stSidebar"] .st-key-navactive a *{color:#fff !important;font-weight:600}
 .sx-brand{display:flex;gap:10px;align-items:center;padding:4px 2px 18px 2px}
-.sx-brand .t1{font-weight:700;font-size:.95rem;color:#fff !important}
+.sx-brand .t1{font-weight:800;font-size:1.35rem;letter-spacing:.01em;color:#fff !important}
 .sx-brand .t2{font-size:.72rem;opacity:.75}
 .sx-sys{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;margin-top:28px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12)}
 .sx-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none}
@@ -194,6 +194,9 @@ section[data-testid="stSidebar"] .st-key-navactive a *{color:#fff !important;fon
 .sx-rs .bar i{display:block;height:100%}
 .sx-rs .empty{color:#94a3b8;font-size:.82rem}
 @media (max-width:700px){.sx-rs .cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
+[data-testid="stStatusWidgetRunningIcon"]{width:26px !important;height:26px !important;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4' width='18' height='12' rx='2'/><path d='M8 20h8M12 16v4M7 8.5l2 1.5-2 1.5M11 12h3'/></svg>") center/contain no-repeat;animation:sx-run 1s ease-in-out infinite alternate}
+[data-testid="stStatusWidgetRunningIcon"] > *{display:none !important}
+@keyframes sx-run{from{opacity:.45;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
 </style>""")
 
 
@@ -269,8 +272,7 @@ def paragraphs(items: list[str]) -> str:
 
 # ───────────────────────── 사이드바 ─────────────────────────
 def brand() -> str:
-    return _h(f'<div class="sx-brand">{icon("shield", 30, "#60a5fa")}<div><div class="t1">AWS Security Response</div>'
-              f'<div class="t2">AI 기반 AWS 보안 사고 대응</div></div></div>')
+    return _h(f'<div class="sx-brand">{icon("shield", 30, "#60a5fa")}<div class="t1">TraceIT</div></div>')
 
 
 def system_status(ok: bool, message: str, when: str) -> str:

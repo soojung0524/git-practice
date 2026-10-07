@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import services as svc  # noqa: E402
 import ui  # noqa: E402
 
-st.set_page_config(page_title="AWS 보안 사고 대응", page_icon="🛡️", layout="wide")
+st.set_page_config(page_title="TraceIT", page_icon="🛡️", layout="wide")
 
 _ver = tuple(int(x) for x in st.__version__.split(".")[:2])
 if _ver < (1, 44):
@@ -164,7 +164,7 @@ def timeline_items(result: dict, current_id: str | None = None, limit: int | Non
 
 # ───────────────────────── 화면: 홈 ─────────────────────────
 def page_home() -> None:
-    html(ui.page_header("AWS 보안 사고 대응 대시보드", SUBTITLE, now_text()))
+    html(ui.page_header("사고 대시보드", SUBTITLE, now_text()))
     result = ss.result
     if not result:
         html(ui.card("분석 결과가 없습니다", "search",
