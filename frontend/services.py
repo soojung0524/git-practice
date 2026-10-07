@@ -33,6 +33,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 SEVERITY_ORDER = ("critical", "high", "medium", "low")
+EXTRA_STATE_KEYS = ("scenario_projection", "correlation_result", "incident_selection",
+                    "security_guidance", "incident_report")
 AGENT_RESULT_KEYS = {
     "application_result": "Application",
     "server_result": "Server",
@@ -108,6 +110,8 @@ def serialize_state(state: dict[str, Any]) -> dict[str, Any]:
         "findings": [to_plain(f) for f in state.get("findings") or []],
         "errors": to_plain(state.get("errors") or {}),
         "interpretation": to_plain(state.get("interpretation")),
+        # 팀 백엔드의 선택 기능 결과 (켜지 않으면 None). 화면 연결 전에도 JSON 에는 남긴다.
+        "extras": {k: to_plain(state.get(k)) for k in EXTRA_STATE_KEYS if state.get(k) is not None},
         "notes": {},  # finding_id -> 보안상 주의사항 (화면에서 만들어 채운다)
         "created_at": datetime.now().isoformat(timespec="seconds"),
     }
@@ -160,8 +164,9 @@ def run_analysis(
     if not Path(path).exists():
         raise FileNotFoundError(f"이벤트 파일이 없습니다: {event_path}")
 
-    # 첫 순회(라우팅 단계)에서만 호스트 목록과 이벤트 수를 기록한다. 상태 카드의 '정상' 개수에 쓴다.
+    # 첫 순회(라우팅 단계)에서만 호스트 목록과 이벤트 수를 기록한다. 분석 범위 표시에 쓴다.
     hosts: set[str] = set()
+    types: dict[str, int] = {}
     counter = {"events": 0, "recorded": False}
 
     def _recording(events):
@@ -170,6 +175,9 @@ def run_analysis(
             h = e.get("host") if isinstance(e, dict) else getattr(e, "host", None)
             if h:
                 hosts.add(str(h))
+            t = e.get("source_type") if isinstance(e, dict) else getattr(e, "source_type", None)
+            if t:
+                types[str(t)] = types.get(str(t), 0) + 1
             yield e
 
     def source():
@@ -217,6 +225,7 @@ def run_analysis(
     result = serialize_state(final)
     result["hosts"] = sorted(hosts)
     result["event_count"] = counter["events"]
+    result["source_type_counts"] = dict(sorted(types.items(), key=lambda kv: -kv[1]))
     return result
 
 
@@ -409,20 +418,43 @@ AREA_LABELS = {  # 화면에 보일 분석 영역 이름 (AGENT_RESULT_KEYS 의 
     "Authentication": "인증 로그",
     "Security": "보안 종합",
 }
-NODE_LABELS = {
+NODE_LABELS = {  # 긴 이름부터 비교한다 ("security_guidance" 가 "security" 로 잘못 잡히지 않게)
+    "security_guidance": "보안 대응 가이드 생성",
+    "incident_report": "사건 보고서 작성",
+    "scenario_projection": "공격 시나리오 매핑",
+    "evidence_correlation": "탐지 결과 연관 분석",
+    "select_incident": "조사 대상 사건 선택",
+    "collect_findings": "탐지 결과 정리",
+    "interpret": "LLM 해석",
     "route": "로그 유형 확인",
     "application": "애플리케이션 로그 조사",
     "server": "서버 상태 조사",
     "network": "네트워크 조사",
     "authentication": "인증 로그 조사",
-    "collect_findings": "탐지 결과 정리",
     "security": "보안 종합 판단",
-    "interpret": "LLM 해석",
 }
 CATEGORY_KO = {
     "security": "보안 사고", "authentication": "인증 이상", "network": "네트워크 이상",
     "performance": "성능 이상", "availability": "가용성 장애", "error": "오류 증가", "resource": "자원 이상",
 }
+
+
+# 성능·자원 이상은 보안 사고로 판단된 바가 없으므로 보안 매뉴얼에 묻지 않는다(팀 방침).
+NO_GUIDANCE_REASONS = {
+    "performance": ("이 탐지는 통계 탐지기가 관측한 성능 이상이며 보안 사고로 판단된 바가 없습니다. "
+                    "AWS Security Incident Response User Guide는 보안 사고 대응 문서이므로, 성능 이상을 "
+                    "보안 사고처럼 설명하지 않기 위해 보안 가이드를 요청하지 않았습니다."),
+    "resource": ("이 탐지는 통계 탐지기가 관측한 자원 사용량 이상이며 보안 사고로 판단된 바가 없습니다. "
+                 "AWS Security Incident Response User Guide는 보안 사고 대응 문서이므로, 단순 자원 이상을 "
+                 "보안 사고로 확대하지 않기 위해 보안 가이드를 요청하지 않았습니다."),
+}
+
+
+def guidance_skip_reason(finding: dict[str, Any] | None) -> str | None:
+    """보안 가이드를 요청하지 않는 탐지면 그 이유, 요청 대상이면 None."""
+    if not finding:
+        return None
+    return NO_GUIDANCE_REASONS.get(finding.get("category"))
 
 
 def node_label(node: str) -> str:
@@ -454,29 +486,23 @@ def headline_finding(result: dict[str, Any]) -> dict[str, Any] | None:
     return found[0] if found else None
 
 
-def area_status(result: dict[str, Any], area: str) -> dict[str, int] | None:
-    """분석 영역(Server, Network 등)의 호스트별 상태 개수.
+def area_observed(result: dict[str, Any], area: str) -> dict[str, int] | None:
+    """분석 영역(Server, Network 등)이 실제로 관측한 값만 센다. 실행되지 않았으면 None.
 
-    그 영역이 만든 탐지 결과 중 가장 높은 위험도로 호스트를 판정한다.
-    긴급·높음 → 장애, 주의·낮음 → 경고, 탐지 없음 → 정상.
-    영역이 실행되지 않았으면 None.
+    정상/경고/장애로 판정하지 않는다. 팀 보고서(report/models.py OPERATIONAL_STATE_POLICY)
+    방침대로, 이 시스템은 이상 징후만 관측하고 심각도 기준이 탐지기마다 달라 운영 상태로
+    환산할 근거가 없기 때문이다.
     """
     agent = (result.get("agents") or {}).get(area)
     if agent is None:
         return None
     ids = set(agent.get("finding_ids") or [])
-    worst: dict[str, str] = {}
-    for f in result.get("findings") or []:
-        if f.get("finding_id") not in ids:
-            continue
-        host = f.get("host") or "(호스트 미상)"
-        state = "bad" if f.get("severity") in ("critical", "high") else "warn"
-        if worst.get(host) != "bad":
-            worst[host] = state
-    all_hosts = set(result.get("hosts") or []) | {f.get("host") for f in result.get("findings") or [] if f.get("host")}
-    bad = sum(1 for v in worst.values() if v == "bad")
-    warn = sum(1 for v in worst.values() if v == "warn")
-    return {"ok": max(len(all_hosts) - bad - warn, 0), "warn": warn, "bad": bad}
+    mine = [f for f in result.get("findings") or [] if f.get("finding_id") in ids]
+    return {
+        "hosts": len({f.get("host") or f.get("service") or "?" for f in mine}),
+        "findings": len(mine),
+        "high": sum(1 for f in mine if f.get("severity") in ("critical", "high")),
+    }
 
 
 def related_findings(result: dict[str, Any], finding: dict[str, Any]) -> list[dict[str, Any]]:
@@ -541,4 +567,142 @@ def system_status() -> tuple[bool, str]:
             problems.append("문서 DB 연결 안 됨")
     if not os.getenv("OPENAI_API_KEY"):
         problems.append("OPENAI_API_KEY 없음")
-    return (not problems, "시스템 정상" if not problems else " · ".join(problems))
+    return (not problems, "매뉴얼 검색 연결됨" if not problems else " · ".join(problems))
+
+
+# ───────────────────────── 시연 데이터 (팀 scripts/build_demo_replay.py 산출물) ─────────────────────────
+GUIDANCE_STATUS_KO = {
+    "not_started": "대기", "analyzing": "조회 중", "completed": "완료", "not_requested": "요청 안 함",
+}
+REPORT_STATUS_KO = {"not_ready": "작성 전", "ready": "준비됨"}
+AGENT_KO = {
+    "application_agent": "애플리케이션 로그", "server_agent": "서버", "network_agent": "네트워크",
+    "authentication_agent": "인증 로그", "security_agent": "보안 종합",
+}
+GROUPING_KO = {
+    "same_host": "같은 호스트", "same_service": "같은 서비스", "shared_entity": "공유 개체(IP·계정 등)",
+    "shared_evidence": "공유 근거 이벤트", "temporal_overlap": "시간 겹침", "temporal_precedes": "시간 선후",
+}
+
+
+def list_demo_packs() -> list[dict[str, Any]]:
+    """output/demo/<시나리오>/manifest.json 을 찾아 목록으로. 제목 순."""
+    root = PROJECT_ROOT / "output" / "demo"
+    packs = []
+    for manifest in sorted(root.glob("*/manifest.json")) if root.exists() else []:
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        data["_dir"] = str(manifest.parent)
+        packs.append(data)
+    return packs
+
+
+def load_demo_file(pack_dir: str, name: str) -> dict[str, Any]:
+    return json.loads((Path(pack_dir) / name).read_text(encoding="utf-8"))
+
+
+# 시연 시나리오 설명 (팀 시연 계획표). 키는 팀 demo/scenarios.py 의 scenario_key 와 같다.
+# 표에 없는 시나리오(샘플 등)는 설명 없이 manifest 제목만 보여준다.
+DEMO_SCENARIOS: dict[str, dict[str, Any]] = {
+    "gaia_network_incident": {
+        "no": 1, "name": "네트워크 이상 발생 및 조사 대상 선정", "area": "Network / Server",
+        "details": ["dbservice1에서 평소와 다른 네트워크 사용량 이상이 발생",
+                    "같은 시간대의 여러 이상 현상을 비교하고 상관분석·조사 대상 선정으로 실제 조사 대상 사건만 선택",
+                    "여러 이상 중 관련 있는 사건만 추려내는 과정"],
+        "point": "여러 이상 현상 중 실제 조사해야 할 사건을 구분하고 선택하는 과정",
+    },
+    "gaia_service_degradation": {
+        "no": 2, "name": "서비스 응답 지연 이상", "area": "Application",
+        "details": ["dbservice1에서 짧은 시간 동안 심각한 응답 지연이 반복 발생",
+                    "같은 서비스에서 연속으로 발생한 지연 탐지를 상관분석해 하나의 사건으로 묶어 조사",
+                    "반복된 이상을 하나의 사건으로 통합하는 과정"],
+        "point": "같은 서비스에서 반복 발생한 이상을 하나의 사건으로 묶는 과정",
+    },
+    "gaia_server_resource_anomaly": {
+        "no": 3, "name": "CPU 사용량 이상", "area": "Server",
+        "details": ["redis에서 평소보다 높은 CPU 사용량 이상이 발생",
+                    "같은 시간대의 다른 서비스 지연과 비교하지만 연결 근거가 없어 별도 사건으로 분리",
+                    "동시에 발생한 문제를 근거 없이 원인과 결과로 연결하지 않는 모습"],
+        "point": "동시에 발생한 문제라고 해서 무조건 원인과 결과로 연결하지 않는 과정",
+    },
+    "russellmitchell_web_scan": {
+        "no": 4, "name": "웹 요청 급증 및 보안성 이상 조사", "area": "Application / Security",
+        "details": ["intranet_server에 짧은 시간 동안 비정상적으로 많은 웹 요청과 높은 오류 응답이 발생",
+                    "요청 급증과 같은 시간대의 스캔 패턴을 각각 분석하고, 직접적인 연관성이 없으면 별도 사건으로 구분한 뒤 "
+                    "보안 매뉴얼(RAG)로 대응 절차를 확인",
+                    "비정상 웹 요청 탐지부터 보안 대응 가이드까지 이어지는 흐름"],
+        "point": "비정상적인 웹 요청을 탐지하고, 별도 보안 이상과 구분한 뒤 보안 매뉴얼로 대응 가이드까지 제공하는 과정",
+    },
+}
+
+
+# ───────────────────────── 화면 설정 (시연 모드 켜기/끄기) ─────────────────────────
+# 브라우저를 새로고침해도 유지되도록 파일에 저장한다. output/ 는 git 에 올라가지 않는다.
+SETTINGS_FILE = PROJECT_ROOT / "output" / "frontend_settings.json"
+
+
+def load_settings() -> dict[str, Any]:
+    try:
+        return json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def demo_mode_enabled() -> bool:
+    return bool(load_settings().get("demo_mode"))
+
+
+def set_demo_mode(on: bool) -> None:
+    data = load_settings()
+    data["demo_mode"] = bool(on)
+    SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SETTINGS_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+
+# ───────────────────────── 분석 범위 (탐지 0건일 때 '정상'으로 오해하지 않도록) ─────────────────────────
+# 팀 Agent Skill 이 실제로 탐지기를 돌리는 로그 종류. 백엔드에서 읽어 오고, 못 읽으면 아래 값을 쓴다.
+_FALLBACK_ANALYZED_TYPES = {"apache_access", "gaia_log", "gaia_trace", "gaia_metric"}
+
+
+def analyzed_source_types() -> set[str]:
+    out: set[str] = set()
+    for mod in ("application_analysis.scripts.run_application_analysis",
+                "server_analysis.scripts.run_server_analysis",
+                "network_analysis.scripts.run_network_analysis",
+                "authentication_analysis.scripts.run_authentication_analysis",
+                "security_analysis.scripts.run_security_analysis"):
+        try:
+            m = __import__(f"agent_skills.{mod}", fromlist=["SOURCE_TYPES"])
+            out |= set(getattr(m, "SOURCE_TYPES", ()) or ())
+        except Exception:
+            return set(_FALLBACK_ANALYZED_TYPES)
+    return out or set(_FALLBACK_ANALYZED_TYPES)
+
+
+def analysis_coverage(result: dict[str, Any]) -> dict[str, Any]:
+    """이번 분석에서 탐지기가 실제로 검사한 로그와 검사하지 못한 로그를 나눈다.
+
+    source_type_counts 가 없는 예전 결과 JSON 이면 available_source_types(종류만)를 쓴다.
+    """
+    counts = result.get("source_type_counts")
+    if not counts:
+        counts = {t: None for t in result.get("available_source_types") or []}
+    covered = analyzed_source_types()
+    checked = {t: n for t, n in counts.items() if t in covered}
+    skipped = {t: n for t, n in counts.items() if t not in covered}
+    limited = []  # 실행됐지만 '미구현/부분 구현'이라고 스스로 밝힌 분석 영역
+    for area, agent in (result.get("agents") or {}).items():
+        if not agent:
+            continue
+        status = str(agent.get("status") or "").lower()
+        if "not_implemented" in status or "partial" in status:
+            notes = (agent.get("extra") or {}).get("notes") or []
+            limited.append((AREA_LABELS.get(area, area), status, notes[0] if notes else ""))
+    return {"checked": checked, "skipped": skipped, "limited": limited}
+
+
+def fmt_types(types: dict[str, Any]) -> str:
+    return ", ".join(f"{t} {n:,}건" if isinstance(n, int) else t for t, n in types.items()) or "없음"

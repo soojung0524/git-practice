@@ -51,7 +51,8 @@ try:
             *svc.AGENT_RESULT_KEYS}
     miss = keys - set(state)
     check("State 결과 키", "OK" if not miss else "깨짐", f"없어진 키: {sorted(miss)}" if miss else "")
-    extra = set(state) - keys - need - {"agent_findings"}
+    extra = set(state) - keys - need - {"agent_findings", "scenario_definition", "investigation_focus",
+                                        *svc.EXTRA_STATE_KEYS}
     if extra:
         check("State 새 키", "주의", f"화면에 아직 안 보이는 새 키: {sorted(extra)}")
 except Exception as e:
@@ -98,7 +99,7 @@ try:
         first = next(iter(load_events(str(svc.PROJECT_ROOT / files[0]))), None)
         has_host = first is not None and (first.get("host") if isinstance(first, dict) else hasattr(first, "host"))
         check("이벤트 host 속성", "OK" if has_host else "주의",
-              "" if has_host else "host 가 없어 서버·네트워크 '정상' 개수가 0으로 나올 수 있음")
+              "" if has_host else "host 가 없어 서버·네트워크 카드의 '이상 징후 대상' 수가 서비스 이름 기준으로 세어짐")
     else:
         check("이벤트 파일", "주의", "output/ 에 .pkl 이 없어 이벤트 형식은 확인하지 못함")
 except Exception as e:

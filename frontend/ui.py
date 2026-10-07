@@ -12,17 +12,16 @@ E = html.escape
 
 # ───────────────────────── 색 ─────────────────────────
 BLUE = "#2563eb"
-RISK = {  # 위험 단계: 라벨, 단계 번호, 글자색, 배경색
-    "critical": ("긴급", 5, "#ffffff", "#dc2626"),
-    "high": ("높음", 4, "#ffffff", "#ea580c"),
-    "medium": ("주의", 3, "#1f2937", "#fbbf24"),
-    "low": ("낮음", 2, "#1f2937", "#e5e7eb"),
-    "none": ("정상", 1, "#ffffff", "#16a34a"),
-}
-STATUS = {  # 상태 카드 항목: 글자, 아이콘 색
-    "ok": ("정상", "#16a34a"),
-    "warn": ("경고", "#f59e0b"),
-    "bad": ("장애", "#dc2626"),
+# 위험 단계: 라벨, 단계 번호, 글자색, 배경색. Finding.severity 4단계에 그대로 대응한다.
+# '정상' 단계는 두지 않는다 - 이 시스템은 이상 징후만 관측하므로 탐지가 없다고 정상이라
+# 말할 근거가 없다(팀 report/models.py OPERATIONAL_STATE_POLICY).
+RISK_LEVELS = 4
+RISK = {
+    "critical": ("긴급", 4, "#ffffff", "#dc2626"),
+    "high": ("높음", 3, "#ffffff", "#ea580c"),
+    "medium": ("주의", 2, "#1f2937", "#fbbf24"),
+    "low": ("낮음", 1, "#1f2937", "#e5e7eb"),
+    "none": ("탐지 없음", 0, "#ffffff", "#64748b"),
 }
 
 # ───────────────────────── 아이콘 (선 아이콘, currentColor) ─────────────────────────
@@ -87,12 +86,12 @@ section[data-testid="stSidebar"] .st-key-navactive a *{color:#fff !important;fon
 .sx-stat .n{font-size:1.45rem;font-weight:800;color:#0f172a;margin-top:2px}
 .sx-mark{width:15px;height:15px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;line-height:1}
 .sx-banner{display:flex;gap:16px;align-items:flex-start;background:#fff5f5;border:1px solid #fecaca;border-radius:12px;padding:18px 20px;margin-bottom:14px}
-.sx-banner.ok{background:#f0fdf4;border-color:#bbf7d0}
+.sx-banner.ok{background:#f8fafc;border-color:#e2e8f0}
 .sx-banner .ico{width:44px;height:44px;border-radius:50%;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
-.sx-banner.ok .ico{background:#16a34a}
+.sx-banner.ok .ico{background:#64748b}
 .sx-banner .main{flex:1;min-width:0}
 .sx-banner .cat{color:#dc2626;font-weight:700;font-size:.8rem}
-.sx-banner.ok .cat{color:#15803d}
+.sx-banner.ok .cat{color:#475569}
 .sx-banner .ttl{font-size:1.2rem;font-weight:800;line-height:1.4;color:#0f172a;margin:2px 0 6px;word-break:keep-all;overflow-wrap:anywhere}
 .sx-banner .desc{color:#475569;font-size:.85rem;line-height:1.6}
 .sx-meta{display:flex;gap:26px;flex:none}
@@ -131,6 +130,27 @@ section[data-testid="stSidebar"] .st-key-navactive a *{color:#fff !important;fon
 .sx-title .tx{font-size:1.35rem;font-weight:800;line-height:1.4;color:#0f172a;word-break:keep-all;overflow-wrap:anywhere}
 .sx-mrow{display:flex;gap:22px;flex-wrap:wrap;color:#475569;font-size:.82rem;margin:8px 0 16px}
 .sx-mrow b{color:#0f172a;font-weight:600;margin-left:6px}
+.sx-stepper{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap}
+.sx-stepper .s{flex:1;min-width:92px;border-radius:10px;padding:8px 10px;background:#fff;border:1px solid #e5e9f2;font-size:.76rem;color:#94a3b8}
+.sx-stepper .s .no{font-weight:800;font-size:.7rem;letter-spacing:.03em}
+.sx-stepper .s .lb{font-weight:700;margin-top:2px;line-height:1.3;word-break:keep-all}
+.sx-stepper .s.done{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+.sx-stepper .s.cur{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.sx-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px}
+.sx-kpi{background:#fff;border:1px solid #e5e9f2;border-radius:12px;padding:12px 14px}
+.sx-kpi .k{font-size:.76rem;color:#64748b}
+.sx-kpi .v{font-size:1.5rem;font-weight:800;color:#0f172a;margin-top:2px;line-height:1.2}
+.sx-kpi .v.muted{color:#cbd5e1}
+.sx-kpi .v.txt{font-size:1.05rem;padding-top:4px}
+.sx-inc{border:1px solid #e5e9f2;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.sx-inc.focus{border:2px solid #2563eb;background:#f8fbff}
+.sx-inc.dim{opacity:.6}
+.sx-inc .t{display:flex;gap:8px;align-items:center;font-weight:700;font-size:.84rem;color:#0f172a;flex-wrap:wrap}
+.sx-inc .m{font-size:.78rem;color:#475569;margin-top:4px;line-height:1.55}
+.sx-tag{display:inline-block;border-radius:5px;padding:1px 7px;font-size:.72rem;font-weight:700;background:#eef2f7;color:#334155;white-space:nowrap}
+.sx-tag.blue{background:#2563eb;color:#fff}
+.sx-tl .it.wf .dt{background:#cbd5e1;box-shadow:0 0 0 3px #f1f5f9}
+.sx-tl .it.wf .tt{color:#64748b;font-weight:500;font-style:italic}
 </style>""")
 
 
@@ -141,9 +161,9 @@ def risk_pill(severity: str | None) -> str:
 
 
 def risk_box(severity: str | None) -> str:
-    """크게 보여주는 위험 단계 블록: 단계 숫자, 라벨, 5칸 게이지."""
+    """크게 보여주는 위험 단계 블록: 단계 숫자, 라벨, 4칸 게이지. 탐지가 없으면 회색 '-'."""
     label, level, fg, bg = RISK.get(severity or "none", RISK["none"])
-    gauge = "".join(f'<i class="{"on" if i <= level else ""}"></i>' for i in range(1, 6))
+    gauge = "".join(f'<i class="{"on" if i <= level else ""}"></i>' for i in range(1, RISK_LEVELS + 1))
     # 밝은 배경(주의·낮음)은 글자와 게이지를 어둡게
     dark = fg != "#ffffff"
     style = f"background:{bg};color:{fg}"
@@ -151,7 +171,7 @@ def risk_box(severity: str | None) -> str:
         gauge = gauge.replace('class="on"', 'class="on" style="background:#1f2937"').replace(
             'class=""', 'class="" style="background:rgba(31,41,55,.18)"')
     return _h(f'<div class="sx-rbig" style="{style}"><div class="k">위험 단계</div>'
-              f'<div class="lv">{level}<small>/5</small></div><div class="lb">{E(label)}</div>'
+              f'<div class="lv">{level or "-"}<small>/{RISK_LEVELS}</small></div><div class="lb">{E(label)}</div>'
               f'<div class="gauge">{gauge}</div></div>')
 
 
@@ -199,7 +219,7 @@ def page_header(title: str, subtitle: str, right: str = "") -> str:
 def banner(*, category: str, title: str, desc: str, occurred: str, updated: str, severity: str | None) -> str:
     ok = severity is None
     return _h(
-        f'<div class="sx-banner{" ok" if ok else ""}"><div class="ico">{icon("check" if ok else "alert", 24, "#fff")}</div>'
+        f'<div class="sx-banner{" ok" if ok else ""}"><div class="ico">{icon("search" if ok else "alert", 24, "#fff")}</div>'
         f'<div class="main"><div class="cat">{E(category)}</div><div class="ttl">{E(title)}</div>'
         f'<div class="desc">{E(desc)}</div></div>'
         f'<div class="sx-meta"><div><div class="k">발생 일시</div><div class="v">{E(occurred)}</div></div>'
@@ -207,20 +227,23 @@ def banner(*, category: str, title: str, desc: str, occurred: str, updated: str,
         f'{risk_box(severity)}</div>')
 
 
-def status_card(title: str, ic: str, counts: dict[str, int] | None, note: str = "") -> str:
-    """counts = {"ok":n, "warn":n, "bad":n}. None 이면 해당 영역을 분석하지 않은 것."""
-    if counts is None:
+def status_card(title: str, ic: str, observed: dict[str, int] | None, note: str = "") -> str:
+    """observed = {"hosts","findings","high"} - 그 분석 영역이 실제로 관측한 값만.
+
+    정상/경고/장애로 판정하지 않는다. 탐지 0건도 '정상'이 아니라 '관측된 이상 징후 없음'이다.
+    None 이면 이번 분석에서 그 영역이 실행되지 않은 것.
+    """
+    if observed is None:
         body = f'<p class="sx-muted">{E(note or "이번 분석에서 실행되지 않았습니다.")}</p>'
     else:
         cells = []
-        for key in ("ok", "warn", "bad"):
-            label, color = STATUS[key]
-            mark = {"ok": "✓", "warn": "!", "bad": "×"}[key]
-            cells.append(f'<div class="sx-stat"><div class="lb"><span class="sx-mark" style="background:{color}">{mark}</span>'
-                         f'{label}</div><div class="n">{counts.get(key, 0)}</div></div>')
+        for key, label, color in (("hosts", "이상 징후 대상", "#2563eb"), ("findings", "탐지", "#f59e0b"),
+                                  ("high", "높음 이상", "#dc2626")):
+            n = observed.get(key, 0)
+            cells.append(f'<div class="sx-stat"><div class="lb"><span class="sx-dot" style="background:{color};margin:0"></span>'
+                         f'{label}</div><div class="n" style="color:{color if n and key == "high" else "#0f172a"}">{n}</div></div>')
         body = f'<div class="sx-stats">{"".join(cells)}</div>'
-        if note:
-            body += f'<p class="sx-muted" style="margin:8px 0 0">{E(note)}</p>'
+        body += (f'<p class="sx-muted" style="margin:8px 0 0">{E(note or "관측된 이상 징후만 집계 · 정상/장애 판정 없음")}</p>')
     return card(title, ic, body)
 
 
@@ -229,7 +252,7 @@ def timeline(items: list[dict], title: str = "타임라인") -> str:
     if not items:
         return card(title, "clock", '<p class="sx-muted">표시할 항목이 없습니다.</p>')
     rows = "".join(
-        f'<div class="it{" cur" if it.get("current") else ""}"><span class="dt"></span>'
+        f'<div class="it{" cur" if it.get("current") else ""}{" wf" if it.get("workflow") else ""}"><span class="dt"></span>'
         f'<span class="tm">{E(it["time"])}</span><div><div class="tt">{E(it["title"])}</div>'
         f'<div class="ts">{E(it.get("sub", ""))}</div></div></div>'
         for it in items)
@@ -267,3 +290,41 @@ def detail_title(severity: str, title: str, meta: list[tuple[str, str]]) -> str:
     return _h(f'<div class="sx-dtop"><div class="l"><div class="sx-title">{risk_pill(severity)}'
               f'<span class="tx">{E(title)}</span></div><div class="sx-mrow" style="margin-bottom:0">{m}</div></div>'
               f'{risk_box(severity)}</div>')
+
+
+# ───────────────────────── 시연 모드 ─────────────────────────
+def stepper(labels: list[str], current: int) -> str:
+    cells = []
+    for i, label in enumerate(labels):
+        cls = "cur" if i == current else ("done" if i < current else "")
+        cells.append(f'<div class="s {cls}"><div class="no">STEP {i + 1}</div><div class="lb">{E(label)}</div></div>')
+    return f'<div class="sx-stepper">{"".join(cells)}</div>'
+
+
+def kpis(items: list[tuple[str, object]]) -> str:
+    """값이 None 이면 아직 공개되지 않은 단계 - '-' 로 흐리게 표시한다(0 과 구분)."""
+    cells = []
+    for label, value in items:
+        if value is None:
+            v, cls = "-", "v muted"
+        else:
+            v, cls = str(value), ("v" if isinstance(value, (int, float)) else "v txt")
+        cells.append(f'<div class="sx-kpi"><div class="k">{E(label)}</div><div class="{cls}">{E(v)}</div></div>')
+    return f'<div class="sx-kpis">{"".join(cells)}</div>'
+
+
+def tag(text: str, blue: bool = False) -> str:
+    return f'<span class="sx-tag{" blue" if blue else ""}">{E(text)}</span>'
+
+
+def incident_row(title: str, meta: list[str], tags: list[str], state: str = "") -> str:
+    """state: 'focus' (조사 대상) | 'dim' (선택되지 않은 후보) | ''"""
+    m = "<br>".join(E(x) for x in meta)
+    return _h(f'<div class="sx-inc {state}"><div class="t">{"".join(tags)}<span>{E(title)}</span></div>'
+              f'<div class="m">{m}</div></div>')
+
+
+def demo_badge() -> str:
+    return _h('<div class="sx-sys" style="margin-top:10px;border-top:none;padding-top:0">'
+              '<span class="sx-dot" style="background:#60a5fa"></span><div><div>시연 모드 켜짐</div>'
+              '<div style="opacity:.6;font-size:.72rem">설정에서 끌 수 있습니다</div></div></div>')
