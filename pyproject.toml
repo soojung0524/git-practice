@@ -13,7 +13,7 @@ dependencies = [
     "langchain-text-splitters>=1.1.2",
     "pymupdf>=1.28.2",
     "python-dotenv>=1.2.3",
-    "streamlit>=1.64.0",
+    "streamlit>=1.44",
     "supabase>=2.31.0",
 ]
 
