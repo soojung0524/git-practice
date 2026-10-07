@@ -23,7 +23,20 @@ from agents import (
     ServerAgent,
 )
 
+from correlation import correlate_scenario, select_incidents
+from guidance import (
+    IncidentSecurityGuidance,
+    SecurityGuidanceProvider,
+    SecurityGuidanceResult,
+    build_security_guidance_question,
+)
 from llm import InterpretationAgent, agent_statuses_from_results
+from report import (
+    NarrativeSummaryProvider,
+    attach_narrative_summary,
+    build_incident_report,
+)
+from scenario import project_findings
 from src.models import Finding
 
 from .state import InvestigationState, scope_kwargs
@@ -37,6 +50,11 @@ NODE_AUTHENTICATION = "authentication_agent"
 NODE_COLLECT = "collect_findings"
 NODE_SECURITY = "security_agent"
 NODE_INTERPRET = "interpret_findings"
+NODE_SCENARIO_PROJECTION = "scenario_projection"
+NODE_EVIDENCE_CORRELATION = "evidence_correlation"
+NODE_SELECT_INCIDENT = "select_incident"
+NODE_SECURITY_GUIDANCE = "security_guidance"
+NODE_INCIDENT_REPORT = "incident_report"
 
 # routing 조건을 하드코딩하지 않고 각 Agent Skill이 선언한 SOURCE_TYPES를 그대로 쓴다.
 _AGENT_SOURCE_TYPES: dict[str, frozenset[str]] = {
@@ -256,3 +274,232 @@ def interpret_node(state: InvestigationState) -> dict:
     )
     interpretation = InterpretationAgent().run(state["findings"], agent_statuses=statuses)
     return {"interpretation": interpretation}
+
+
+# ---------------------------------------------------------------------------
+# scenario mode node (opt-in)
+# ---------------------------------------------------------------------------
+#
+# 세 node 모두 correlation/scenario의 public 함수만 호출한다. 내부 함수(_로 시작하는
+# 것)를 쓰지 않고, correlation 로직을 여기에 복사하지도 않는다.
+
+
+def scenario_projection_node(state: InvestigationState) -> dict:
+    """deduplicate된 state["findings"]를 scenario 시간축에 투영한다.
+
+    입력은 state["findings"] 하나뿐이다. security_result.findings를 더하지 않는다 -
+    그것은 이미 findings의 부분집합이라 더하면 security Finding이 중복된다.
+
+    on_missing_window를 지정하지 않고 project_findings의 기본 정책(error)을 쓴다.
+    "Window 밖 Finding 제외"와 "dataset Window 누락"은 다른 문제다. 전자는 Window 선택의
+    정상적인 결과지만, 후자는 scenario 정의가 그 dataset을 다루지 않는다는 뜻이므로
+    조용히 넘기지 않는다(MissingDatasetWindowError가 errors에 기록된다).
+    """
+    scenario = state["scenario_definition"]
+    if scenario is None:
+        return {}
+
+    try:
+        projection = project_findings(state["findings"], scenario)
+    except _PROGRAMMING_ERRORS:
+        raise
+    except Exception:
+        return {"errors": {NODE_SCENARIO_PROJECTION: traceback.format_exc()}}
+
+    return {"scenario_projection": projection}
+
+
+def evidence_correlation_node(state: InvestigationState) -> dict:
+    """ScenarioProjection을 correlation한다.
+
+    앞 단계가 실패해 projection이 None이면 아무 일도 하지 않는다(None에 접근해
+    터지지 않게 한다).
+    """
+    projection = state["scenario_projection"]
+    if projection is None:
+        return {}
+
+    try:
+        result = correlate_scenario(projection)
+    except _PROGRAMMING_ERRORS:
+        raise
+    except Exception:
+        return {"errors": {NODE_EVIDENCE_CORRELATION: traceback.format_exc()}}
+
+    return {"correlation_result": result}
+
+
+def select_incident_node(state: InvestigationState) -> dict:
+    """anchor Finding이 속한 incident만 조사 대상으로 고른다.
+
+    investigation_focus가 None이면 incident_selection을 None으로 남긴다 - 빈 결과를
+    만들지 않는다. None은 "selection을 요청하지 않음"을 뜻한다.
+    """
+    focus = state["investigation_focus"]
+    result = state["correlation_result"]
+    if focus is None or result is None:
+        return {}
+
+    try:
+        selection = select_incidents(result, focus)
+    except _PROGRAMMING_ERRORS:
+        raise
+    except Exception:
+        return {"errors": {NODE_SELECT_INCIDENT: traceback.format_exc()}}
+
+    return {"incident_selection": selection}
+
+
+def make_security_guidance_node(provider: SecurityGuidanceProvider):
+    """provider를 closure로 받아 security_guidance node를 만든다.
+
+    provider를 InvestigationState에 넣지 않는 이유: State는 직렬화 대상이고, 외부 API
+    client를 들고 있는 객체가 거기 들어가면 안 된다. build_graph가 node를 만들 때
+    주입한다.
+
+    호출 조건(모두 만족해야 provider를 호출한다):
+      - provider가 있다(이 node 자체가 provider 없으면 graph에 추가되지 않는다)
+      - scenario mode다(correlation_result가 있다)
+      - incident_selection이 있다
+      - focused_incident_ids가 비어 있지 않다
+
+    focus가 없거나 전부 unmatched면 외부 호출을 하지 않는다.
+
+    모든 incident가 실패한 경우의 정책: security_guidance를 None으로 두고
+    errors에 기록한다. 실패한 incident 목록은 incident_selection.focused_incident_ids와
+    같으므로 정보가 사라지지 않는다. 일부만 실패하면 성공분을 저장하고
+    failed_incident_ids에 실패분을 남긴다(이쪽은 None으로 두면 성공분이 사라진다).
+    """
+
+    def security_guidance_node(state: InvestigationState) -> dict:
+        selection = state["incident_selection"]
+        result = state["correlation_result"]
+
+        if selection is None or result is None:
+            return {}
+        if not selection.focused_incident_ids:
+            return {}
+
+        guidance: list[IncidentSecurityGuidance] = []
+        failed: list[str] = []
+        first_traceback: str | None = None
+
+        # focused_incident_ids는 이미 canonical 정렬돼 있다. 그 순서대로 호출한다.
+        for incident_id in selection.focused_incident_ids:
+            incident = result.incident_by_id(incident_id)
+            if incident is None:
+                failed.append(incident_id)
+                continue
+
+            question = build_security_guidance_question(incident)
+            try:
+                response = provider.generate(question)
+            except _PROGRAMMING_ERRORS:
+                raise
+            except Exception:
+                failed.append(incident_id)
+                if first_traceback is None:
+                    first_traceback = traceback.format_exc()
+                continue
+
+            guidance.append(
+                IncidentSecurityGuidance(
+                    incident_id=incident_id,
+                    question=question,
+                    response=response.response,
+                    provider_name=response.provider_name,
+                    model=response.model,
+                )
+            )
+
+        updates: dict = {}
+        if failed and first_traceback is not None:
+            updates["errors"] = {
+                NODE_SECURITY_GUIDANCE: (
+                    f"focused incident {len(failed)}건의 guidance 생성이 실패했다 "
+                    f"(실패: {failed}).\n{first_traceback}"
+                )
+            }
+
+        if not guidance:
+            # 전부 실패했다. 앞 단계 결과는 그대로 보존된다.
+            return updates
+
+        notes: list[str] = []
+        if failed:
+            notes.append(
+                f"focused incident {len(failed)}건은 guidance 생성에 실패했다: {failed}"
+            )
+
+        updates["security_guidance"] = SecurityGuidanceResult(
+            focused_incident_ids=selection.focused_incident_ids,
+            guidance=tuple(guidance),
+            failed_incident_ids=tuple(failed),
+            notes=tuple(notes),
+        )
+        return updates
+
+    return security_guidance_node
+
+
+_AGENT_RESULT_KEYS = (
+    "application_result",
+    "server_result",
+    "network_result",
+    "authentication_result",
+    "security_result",
+)
+
+_SUMMARY_FAILED_NOTE = "자연어 요약 생성이 실패했다. 결정론적 보고서는 보존된다."
+
+
+def make_incident_report_node(
+    narrative_summary_provider: NarrativeSummaryProvider | None = None,
+):
+    """결정론적 보고서를 만들고, provider가 있으면 자연어 요약을 붙인다.
+
+    LLM 요약이 실패해도 결정론적 보고서는 State에 남는다 - 사실이 LLM 때문에
+    사라지면 안 된다.
+
+    InvestigationState를 report 패키지에 넘기지 않는다. 여기서 풀어서 개별 인자로
+    전달한다(report는 orchestration을 모른다).
+    """
+
+    def incident_report_node(state: InvestigationState) -> dict:
+        agent_results = {key: state[key] for key in _AGENT_RESULT_KEYS}
+        try:
+            report = build_incident_report(
+                investigation_id=state["investigation_id"],
+                findings=state["findings"],
+                agent_results=agent_results,
+                errors=state["errors"],
+                routed_agents=state["routed_agents"],
+                collected_findings_count=len(state["agent_findings"]),
+                scenario_projection=state["scenario_projection"],
+                correlation_result=state["correlation_result"],
+                incident_selection=state["incident_selection"],
+                security_guidance=state["security_guidance"],
+            )
+        except _PROGRAMMING_ERRORS:
+            raise
+        except Exception:
+            return {"errors": {NODE_INCIDENT_REPORT: traceback.format_exc()}}
+
+        if narrative_summary_provider is None:
+            return {"incident_report": report}
+
+        try:
+            report = attach_narrative_summary(report, narrative_summary_provider)
+        except _PROGRAMMING_ERRORS:
+            raise
+        except Exception:
+            return {
+                "incident_report": report,
+                "errors": {
+                    NODE_INCIDENT_REPORT: _SUMMARY_FAILED_NOTE + chr(10) + traceback.format_exc()
+                },
+            }
+
+        return {"incident_report": report}
+
+    return incident_report_node
